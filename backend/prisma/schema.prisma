@@ -1,0 +1,367 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ------------------------------------------------------------------
+// MODELO CORE SAAS (TENANT)
+// ------------------------------------------------------------------
+model empresas {
+  id               Int       @id @default(autoincrement())
+  nombre           String    @db.VarChar(255)
+  rut              String?   @db.VarChar(20)
+  subdominio       String?   @unique @db.VarChar(100) // Útil para URLs personalizadas (ej: cliente.biot.com)
+  activo           Boolean   @default(true)
+  created_at       DateTime  @default(now()) @db.Timestamp(6)
+  updated_at       DateTime  @updatedAt @db.Timestamp(6)
+
+  // Relaciones inversas (Un tenant tiene muchos registros de todo)
+  usuarios             Usuarios[]
+  entidades            entidades[]
+  productos            productos[]
+  operarios            operarios[]
+  equipos              equipos[]
+  ubicaciones          ubicaciones[]
+  cotizaciones         cotizaciones[]
+  ordenes_trabajo      ordenes_trabajo[]
+  tareas               tareas[]
+  catalogo_tareas      catalogo_tareas[]
+  correos_internos     correos_internos[]
+  unidades_stock       unidades_stock[]
+  movimientos          movimientos[]
+}
+
+// ------------------------------------------------------------------
+// MODELOS DE NEGOCIO (Con tenant_id inyectado y llaves compuestas)
+// ------------------------------------------------------------------
+
+enum Rol {
+  admin
+  jefe_taller
+  administrativo
+  operario
+}
+
+model Usuarios {
+  id         Int       @id @default(autoincrement())
+  tenant_id  Int
+  email      String    @unique // El email sigue siendo globalmente único para el login
+  password   String
+  nombre     String
+  rol        Rol       @default(operario)
+  activo     Boolean   @default(true)
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+
+  empresas    empresas      @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  movimientos movimientos[]
+}
+
+model entidades {
+  id              Int       @id @default(autoincrement())
+  tenant_id       Int
+  nombre          String    @db.VarChar(255)
+  rut             String?   @db.VarChar(20)
+  tipo            String?   @db.VarChar(20)
+  giro            String?   @db.VarChar(255)
+  direccion       String?
+  comuna          String?   @db.VarChar(100)
+  ciudad          String?   @db.VarChar(100)
+  email           String?   @db.VarChar(255)
+  telefono        String?   @db.VarChar(50)
+  contacto_nombre String?   @db.VarChar(255)
+  activo          Boolean?  @default(true)
+  created_at      DateTime? @default(now()) @db.Timestamp(6)
+
+  empresas        empresas          @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  cotizaciones    cotizaciones[]
+  ordenes_trabajo ordenes_trabajo[]
+
+  @@unique([tenant_id, rut]) // El rut no se puede repetir dentro de la misma empresa
+}
+
+model productos {
+  id                   Int       @id @default(autoincrement())
+  tenant_id            Int
+  codigo               String    @db.VarChar(50)
+  nombre               String    @db.VarChar(255)
+  tipo_medicion        String?   @db.VarChar(20)
+  unidad_base          String?   @db.VarChar(10)
+  permite_retazo       Boolean?  @default(false)
+  activo               Boolean?  @default(true)
+  precio_compra        Decimal?  @default(0) @db.Decimal(15, 2)
+  precio_venta         Decimal?  @default(0) @db.Decimal(15, 2)
+  stock_minimo         Decimal?  @default(0) @db.Decimal(12, 4)
+
+  empresas             empresas               @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  unidades_stock       unidades_stock[]
+  detalle_cotizaciones detalle_cotizaciones[]
+
+  @@unique([tenant_id, codigo]) // El código de producto es único solo por empresa
+}
+
+model operarios {
+  id                   Int       @id @default(autoincrement())
+  tenant_id            Int
+  codigo               String?   @db.VarChar(50)
+  nombre               String    @db.VarChar(255)
+  especialidad         String?   @db.VarChar(100)
+  valor_hora           Decimal?  @default(0) @db.Decimal(10, 2)
+  activo               Boolean?  @default(true)
+  email                String?   @db.VarChar(255)
+  celular              String?   @db.VarChar(50)
+
+  empresas             empresas               @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  tareas               tareas[]
+  detalle_cotizaciones detalle_cotizaciones[]
+  registro_tiempo      registro_tiempo[]
+
+  @@unique([tenant_id, codigo])
+}
+
+model equipos {
+  id                   Int       @id @default(autoincrement())
+  tenant_id            Int
+  codigo               String?   @db.VarChar(50)
+  nombre               String    @db.VarChar(255)
+  tipo                 String?   @db.VarChar(100)
+  valor_hora           Decimal   @default(0) @db.Decimal(10, 2)
+  ubicacion            String?   @db.VarChar(100)
+  activo               Boolean?  @default(true)
+
+  empresas             empresas               @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  detalle_cotizaciones detalle_cotizaciones[]
+  registro_tiempo      registro_tiempo[]
+
+  @@unique([tenant_id, codigo])
+}
+
+model ubicaciones {
+  id             Int       @id @default(autoincrement())
+  tenant_id      Int
+  centro         String?   @db.VarChar(100)
+  bodega         String?   @db.VarChar(100)
+  ubicacion      String?   @db.VarChar(100)
+  nivel          String?   @db.VarChar(50)
+
+  empresas       empresas         @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  unidades_stock unidades_stock[]
+}
+
+model cotizaciones {
+  id                   Int       @id @default(autoincrement())
+  tenant_id            Int
+  entidad_id           Int?
+  cliente_nombre       String    @db.VarChar(255)
+  folio                String?   @db.VarChar(20)
+  fecha_emision        DateTime? @default(now()) @db.Timestamp(6)
+  validez_dias         Int?      @default(15)
+  monto_neto           Decimal?  @default(0) @db.Decimal(15, 2)
+  monto_iva            Decimal?  @default(0) @db.Decimal(15, 2)
+  monto_total          Decimal?  @default(0) @db.Decimal(15, 2)
+  estado               String?   @db.VarChar(20)
+  observaciones        String?
+  updated_at           DateTime? @default(now()) @db.Timestamp(6)
+  imagen_url           String?
+  pdf_base64           String?
+  fecha_ultimo_envio   DateTime? @db.Timestamp(6)
+  motivo_rechazo       String?
+  fecha_rechazo        DateTime? @db.Timestamp(6)
+
+  empresas             empresas               @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  entidades            entidades?             @relation(fields: [entidad_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  detalle_cotizaciones detalle_cotizaciones[]
+  ordenes_trabajo      ordenes_trabajo[]
+
+  @@unique([tenant_id, folio]) // El folio es único por empresa
+}
+
+model detalle_cotizaciones {
+  id            Int      @id @default(autoincrement())
+  cotizacion_id Int?
+  tipo_item     String?  @default("servicio") @db.VarChar(20)
+  producto_id   Int?
+  operario_id   Int?
+  equipo_id     Int?
+  descripcion   String
+  cantidad      Decimal  @db.Decimal(12, 4)
+  unitario      Decimal  @db.Decimal(15, 2)
+  total         Decimal  @db.Decimal(15, 2)
+
+  cotizaciones  cotizaciones? @relation(fields: [cotizacion_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  productos     productos?    @relation(fields: [producto_id], references: [id])
+  operarios     operarios?    @relation(fields: [operario_id], references: [id])
+  equipos       equipos?      @relation(fields: [equipo_id], references: [id])
+}
+
+model ordenes_trabajo {
+  id                Int       @id @default(autoincrement())
+  tenant_id         Int
+  cotizacion_id     Int?
+  entidad_id        Int?
+  folio             String?   @db.VarChar(20)
+  cliente_nombre    String?   @db.VarChar(255)
+  estado            String?   @db.VarChar(20)
+  fecha_inicio      DateTime? @db.Timestamp(6)
+  fecha_fin         DateTime? @db.Timestamp(6)
+  costo_estimado    Decimal?  @default(0) @db.Decimal(15, 2)
+  costo_real        Decimal?  @default(0) @db.Decimal(15, 2)
+  precio_venta      Decimal?  @default(0) @db.Decimal(15, 2)
+  margen_real       Decimal?  @default(0) @db.Decimal(15, 2)
+  margen_porcentaje Decimal?  @default(0) @db.Decimal(5, 2)
+  pdf_base64        String?   @db.Text
+  created_at        DateTime? @default(now()) @db.Timestamp(6)
+  updated_at        DateTime? @default(now()) @db.Timestamp(6)
+
+  empresas          empresas      @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  entidades         entidades?    @relation(fields: [entidad_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  cotizaciones      cotizaciones? @relation(fields: [cotizacion_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tareas            tareas[]
+
+  @@unique([tenant_id, folio])
+}
+
+model tareas {
+  id                 Int       @id @default(autoincrement())
+  tenant_id          Int
+  ot_id              Int?
+  operario_id        Int?
+  dependencia_id     Int?
+  nombre             String    @db.VarChar(255)
+  estado             String?   @db.VarChar(20)
+  tipo               String?   @db.VarChar(20)
+  orden              Int?
+  requiere_material  Boolean?  @default(false)
+  requiere_documento Boolean?  @default(false)
+  observaciones      String?
+  fecha_inicio       DateTime? @db.Timestamp(6)
+  fecha_fin          DateTime? @db.Timestamp(6)
+  fecha_inicio_real  DateTime? @db.Timestamp(6)
+  fecha_fin_real     DateTime? @db.Timestamp(6)
+  created_at         DateTime? @default(now()) @db.Timestamp(6)
+  updated_at         DateTime? @default(now()) @updatedAt @db.Timestamp(6)
+
+  empresas           empresas          @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  ordenes_trabajo    ordenes_trabajo?  @relation(fields: [ot_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  operarios          operarios?        @relation(fields: [operario_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tarea_padre        tareas?           @relation("DependenciaTarea", fields: [dependencia_id], references: [id])
+  tareas_hijas       tareas[]          @relation("DependenciaTarea")
+  consumo_ot         consumo_ot[]
+  registro_tiempo    registro_tiempo[]
+  pausas_tarea       pausas_tarea[]
+}
+
+model unidades_stock {
+  id                  Int       @id @default(autoincrement())
+  tenant_id           Int
+  producto_id         Int?
+  ubicacion_id        Int?
+  es_agregado         Boolean?  @default(false)
+  tipo_unit           String?   @db.VarChar(20)
+  cantidad_total      Decimal?  @default(1) @db.Decimal(12, 4)
+  cantidad_disponible Decimal?  @default(1) @db.Decimal(12, 4)
+  cantidad_reservada  Decimal?  @default(0) @db.Decimal(12, 4)
+  largo               Decimal?  @db.Decimal(10, 2)
+  ancho               Decimal?  @db.Decimal(10, 2)
+  espesor             Decimal?  @db.Decimal(10, 2)
+  peso                Decimal?  @db.Decimal(10, 2)
+  estado              String?   @db.VarChar(20)
+  created_at          DateTime? @default(now()) @db.Timestamp(6)
+  updated_at          DateTime? @default(now()) @db.Timestamp(6)
+
+  empresas            empresas      @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  productos           productos?    @relation(fields: [producto_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  ubicaciones         ubicaciones?  @relation(fields: [ubicacion_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  consumo_ot          consumo_ot[]
+  movimientos         movimientos[]
+}
+
+model consumo_ot {
+  id                 Int       @id @default(autoincrement())
+  tarea_id           Int?
+  unidad_stock_id    Int?
+  cantidad_utilizada Decimal   @db.Decimal(12, 4)
+  created_at         DateTime? @default(now()) @db.Timestamp(6)
+
+  tareas             tareas?         @relation(fields: [tarea_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  unidades_stock     unidades_stock? @relation(fields: [unidad_stock_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model movimientos {
+  id              Int       @id @default(autoincrement())
+  tenant_id       Int
+  unidad_stock_id Int?
+  usuario_id      Int?
+  tipo            String?   @db.VarChar(20)
+  cantidad_movida Decimal   @db.Decimal(12, 4)
+  referencia_tipo String?   @db.VarChar(20)
+  referencia_id   Int?
+  motivo          String?   @db.Text
+  created_at      DateTime? @default(now()) @db.Timestamp(6)
+
+  empresas        empresas        @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  unidades_stock  unidades_stock? @relation(fields: [unidad_stock_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  usuario         Usuarios?       @relation(fields: [usuario_id], references: [id])
+}
+
+model registro_tiempo {
+  id             Int       @id @default(autoincrement())
+  tarea_id       Int?
+  operario_id    Int?
+  equipo_id      Int?
+  horas          Decimal?  @db.Decimal(10, 2)
+  costo_total    Decimal?  @db.Decimal(15, 2)
+  descripcion    String?   @db.Text
+  fecha_registro DateTime? @default(now()) @db.Timestamp(6)
+
+  tareas         tareas?    @relation(fields: [tarea_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  operarios      operarios? @relation(fields: [operario_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  equipos        equipos?   @relation(fields: [equipo_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model pausas_tarea {
+  id                Int       @id @default(autoincrement())
+  tarea_id          Int
+  motivo            String
+  fecha_pausa       DateTime  @default(now()) @db.Timestamp(6)
+  fecha_reanudacion DateTime? @db.Timestamp(6)
+
+  tareas            tareas    @relation(fields: [tarea_id], references: [id], onDelete: Cascade)
+}
+
+model catalogo_tareas {
+  id          Int      @id @default(autoincrement())
+  tenant_id   Int
+  codigo      String   @db.VarChar(50)
+  nombre      String   @db.VarChar(255)
+  descripcion String?  @db.Text
+  activo      Boolean? @default(true)
+
+  empresas    empresas @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+
+  @@unique([tenant_id, codigo])
+}
+
+model correos_internos {
+  id         Int      @id @default(autoincrement())
+  tenant_id  Int
+  nombre     String   @db.VarChar(255)
+  email      String   @db.VarChar(255)
+  empresa    String?  @db.VarChar(100)
+  telefono   String?  @db.VarChar(50)
+  ultimo_uso DateTime @default(now()) @db.Timestamp(6)
+
+  empresas   empresas @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+
+  @@unique([tenant_id, email])
+}

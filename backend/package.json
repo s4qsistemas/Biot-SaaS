@@ -1,0 +1,28 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js"
+  },
+  "keywords": [],
+  "author": "Diego Ignacio Alvial Arrepol",
+  "license": "ISC",
+  "description": "Gestor SaaS Ordenes de Trabajo",
+  "devDependencies": {
+    "nodemon": "^3.1.14",
+    "prisma": "5.22"
+  },
+  "dependencies": {
+    "@prisma/client": "5.22",
+    "axios": "^1.13.6",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "4.21",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "morgan": "^1.10.1"
+  }
+}

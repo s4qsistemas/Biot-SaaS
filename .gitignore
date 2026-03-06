@@ -1,0 +1,31 @@
+# --- Dependencias ---
+# Ignora node_modules en la raíz y en cualquier subcarpeta
+**/node_modules/
+
+# --- Entorno y Secretos (VITAL) ---
+# El doble asterisco asegura que proteges backend/.env y frontend/.env
+**/.env
+**/.env.*
+# Por si acaso tienes archivos locales de entorno
+**/.env.local
+
+# --- Base de Datos ---
+# Ignora carpetas de datos de Docker/Postgres en cualquier nivel
+**/pgdata/
+**/postgres_data/
+
+# --- Logs ---
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+
+# --- Builds y compilados ---
+**/dist/
+**/build/
+**/.next/
+
+# --- Archivos del SO e IDEs ---
+.DS_Store
+Thumbs.db
+**/.vscode/
+**/.idea/
