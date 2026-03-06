@@ -46,7 +46,9 @@ model empresas {
 // ------------------------------------------------------------------
 
 enum Rol {
+  super_admin
   admin
+  gerente
   jefe_taller
   administrativo
   operario

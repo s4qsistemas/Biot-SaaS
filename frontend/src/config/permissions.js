@@ -1,0 +1,34 @@
+// src/config/permissions.js
+
+export const ROLES = {
+    SUPER_ADMIN: 'super_admin',
+    ADMIN: 'admin',
+    GERENTE: 'gerente',
+    JEFE_TALLER: 'jefe_taller',
+    ADMINISTRATIVO: 'administrativo',
+    OPERARIO: 'operario'
+};
+
+export const PERMISOS = {
+    // --- LECTURA DE MÓDULOS (Para proteger las Rutas) ---
+    CATALOGOS_LEER: Object.values(ROLES),
+    INVENTARIO_LEER: Object.values(ROLES),
+    ENTIDADES_LEER: Object.values(ROLES),
+    OT_LEER: Object.values(ROLES),
+    COTIZACIONES_LEER: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.GERENTE, ROLES.JEFE_TALLER, ROLES.ADMINISTRATIVO],
+
+    // --- ACCIONES ESPECÍFICAS (Para ocultar botones dentro de las vistas) ---
+    CATALOGOS_ESCRIBIR: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.GERENTE, ROLES.JEFE_TALLER, ROLES.ADMINISTRATIVO],
+    INVENTARIO_MOVER: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.GERENTE, ROLES.JEFE_TALLER, ROLES.ADMINISTRATIVO],
+    INVENTARIO_INICIALIZAR: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.GERENTE, ROLES.JEFE_TALLER],
+    ENTIDADES_ESCRIBIR: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.ADMINISTRATIVO],
+    COTIZACIONES_ESCRIBIR: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.JEFE_TALLER, ROLES.ADMINISTRATIVO],
+    OT_GESTION_MAESTRA: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.GERENTE, ROLES.JEFE_TALLER, ROLES.ADMINISTRATIVO],
+    OT_OPERACION_TALLER: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.GERENTE, ROLES.JEFE_TALLER]
+};
+
+// Función helper para usar en tus componentes (ej: ocultar el botón "Crear Cotización")
+export const tienePermiso = (userRole, accionPermitida) => {
+    if (!userRole) return false;
+    return accionPermitida.includes(userRole);
+};
