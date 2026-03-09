@@ -3,7 +3,6 @@ import { formatRut, validateRut } from '../../utils/rut';
 
 export default function ModalEditarMaestranza({ isOpen, onClose, onSubmit, empresaData }) {
     const [activeTab, setActiveTab] = useState('empresa');
-    const [errorRut, setErrorRut] = useState('');
 
     const [formData, setFormData] = useState({
         nombre_empresa: '', rut_empresa: '', alias: '', activo: true, plan_id: '',
@@ -25,7 +24,6 @@ export default function ModalEditarMaestranza({ isOpen, onClose, onSubmit, empre
                 password_admin: '' // Siempre oculto por seguridad
             });
             setActiveTab('empresa'); // Reiniciar a la primera pestaña
-            setErrorRut('');
         }
     }, [empresaData, isOpen]);
 
@@ -35,7 +33,6 @@ export default function ModalEditarMaestranza({ isOpen, onClose, onSubmit, empre
 
         if (name === 'rut_empresa') {
             finalValue = formatRut(value);
-            setErrorRut('');
         }
 
         setFormData({ ...formData, [name]: finalValue });
@@ -43,12 +40,6 @@ export default function ModalEditarMaestranza({ isOpen, onClose, onSubmit, empre
 
     const handleFormSubmit = (e) => {
         e.preventDefault();
-
-        if (!validateRut(formData.rut_empresa)) {
-            setErrorRut('El RUT ingresado no es válido');
-            setActiveTab('empresa'); // Forzamos ir a la pestaña 1 para que vea el error
-            return;
-        }
 
         // Enviamos el ID y los datos al padre
         onSubmit(empresaData.id, formData);
@@ -87,8 +78,14 @@ export default function ModalEditarMaestranza({ isOpen, onClose, onSubmit, empre
                                 </div>
                                 <div>
                                     <label className="block text-xs font-medium text-txt-primary mb-1">RUT</label>
-                                    <input type="text" name="rut_empresa" value={formData.rut_empresa} onChange={handleChange} required className={`w-full bg-dark-bg border rounded-lg px-3 py-2 text-sm text-txt-primary focus:outline-none focus:ring-1 ${errorRut ? 'border-red-500 focus:ring-red-500' : 'border-dark-border focus:ring-brand'}`} />
-                                    {errorRut && <p className="text-red-500 text-[10px] mt-1">{errorRut}</p>}
+                                    <input
+                                        type="text"
+                                        name="rut_empresa"
+                                        value={formData.rut_empresa}
+                                        readOnly
+                                        className="w-full bg-dark-eval border border-dark-border rounded-lg px-3 py-2 text-sm text-txt-secondary cursor-not-allowed focus:outline-none"
+                                    />
+                                    <p className="text-txt-secondary text-[10px] mt-1 italic">* El RUT es el identificador único y no puede modificarse.</p>
                                 </div>
                             </div>
 

@@ -5,8 +5,8 @@ CREATE TYPE "Rol" AS ENUM ('super_admin', 'admin', 'gerente', 'jefe_taller', 'ad
 CREATE TABLE "empresas" (
     "id" SERIAL NOT NULL,
     "nombre" VARCHAR(255) NOT NULL,
-    "rut" VARCHAR(20),
-    "alias" VARCHAR(100),
+    "rut" VARCHAR(20) NOT NULL,
+    "alias" VARCHAR(100) NOT NULL,
     "activo" BOOLEAN NOT NULL DEFAULT true,
     "plan_id" INTEGER,
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -305,6 +305,9 @@ CREATE TABLE "planes" (
 
     CONSTRAINT "planes_pkey" PRIMARY KEY ("id")
 );
+
+-- CreateIndex
+CREATE UNIQUE INDEX "empresas_rut_key" ON "empresas"("rut");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "empresas_alias_key" ON "empresas"("alias");

@@ -19,8 +19,8 @@ datasource db {
 model empresas {
   id               Int       @id @default(autoincrement())
   nombre           String    @db.VarChar(255)
-  rut              String?   @db.VarChar(20)
-  alias            String?   @unique @db.VarChar(100)
+  rut              String    @unique @db.VarChar(20)
+  alias            String    @unique @db.VarChar(100)
   activo           Boolean   @default(true)
   plan_id          Int?      
   planes           planes?   @relation(fields: [plan_id], references: [id])

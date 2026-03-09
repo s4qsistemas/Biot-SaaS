@@ -2,6 +2,7 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const { hashPassword } = require('../utils/auth'); // Tu encriptador
 const { ROLES } = require('../config/permissions'); // Tu diccionario de roles
+const { validateRut, formatRutForDB } = require('../utils/rut'); // Utilidad para RUT
 
 // ==========================================
 // 🏢 FLUJO 1: SUPER ADMIN CREA CLIENTE (EMPRESA + ADMIN)
@@ -10,17 +11,23 @@ const registrarEmpresaYAdmin = async (req, res) => {
     try {
         const { nombre_empresa, rut_empresa, alias, nombre_admin, email_admin, password_admin } = req.body;
 
+        // 🛡️ Validar y formatear RUT
+        if (!validateRut(rut_empresa)) {
+            return res.status(400).json({ message: 'El RUT proporcionado es inválido o corrupto.' });
+        }
+        const rutFormateado = formatRutForDB(rut_empresa);
+
         // 1. Encriptar la contraseña del nuevo cliente
         const hashedPassword = await hashPassword(password_admin);
 
         // 2. Transacción: Creamos la Empresa y su Usuario Admin amarrado
         const resultado = await prisma.$transaction(async (tx) => {
-            
+
             // A. Nace el Tenant (Empresa)
             const nuevaEmpresa = await tx.empresas.create({
                 data: {
                     nombre: nombre_empresa,
-                    rut: rut_empresa,
+                    rut: rutFormateado,
                     alias: alias
                 }
             });
@@ -60,7 +67,7 @@ const registrarEmpleado = async (req, res) => {
 
         // 1. Validar que el Admin no intente crear a otro Admin o a un Super Admin (Escalamiento de privilegios)
         const rolesPermitidosParaCrear = [ROLES.GERENTE, ROLES.JEFE_TALLER, ROLES.ADMINISTRATIVO, ROLES.OPERARIO];
-        
+
         if (!rolesPermitidosParaCrear.includes(rol)) {
             return res.status(403).json({ message: "No tiene permisos para crear usuarios con este nivel de acceso." });
         }
@@ -78,7 +85,7 @@ const registrarEmpleado = async (req, res) => {
                 rol: rol
             },
             // Excluimos la contraseña de la respuesta por seguridad
-            select: { id: true, nombre: true, email: true, rol: true, activo: true } 
+            select: { id: true, nombre: true, email: true, rol: true, activo: true }
         });
 
         res.status(201).json({ message: 'Empleado registrado con éxito', data: nuevoEmpleado });

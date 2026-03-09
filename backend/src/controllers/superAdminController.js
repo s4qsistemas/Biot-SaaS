@@ -1,36 +1,51 @@
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
+const { validateRut, formatRutForDB } = require('../utils/rut');
 
 const prisma = new PrismaClient();
 
 const crearMaestranza = async (req, res) => {
     try {
-        // Cambiamos subdominio por alias
         const { nombre_empresa, rut_empresa, alias, nombre_admin, email_admin, password_admin, plan_id } = req.body;
 
-        if (!nombre_empresa || !alias || !email_admin || !plan_id) {
+        if (!nombre_empresa || !rut_empresa || !alias || !email_admin || !plan_id) {
             return res.status(400).json({ message: 'Faltan campos obligatorios.' });
         }
 
+        // 🛡️ 1. VALIDAR RUT ESTRICTO
+        if (!validateRut(rut_empresa)) {
+            return res.status(400).json({ message: 'El RUT proporcionado es inválido o corrupto.' });
+        }
+
+        // 🛡️ 2. FORMATEAR RUT PARA LA BASE DE DATOS (ej: 12345678-K)
+        const rutFormateado = formatRutForDB(rut_empresa);
+
+        // 🛡️ 3. REVISAR DUPLICIDAD DE RUT EN LA BASE DE DATOS
+        const existeRut = await prisma.empresas.findUnique({ where: { rut: rutFormateado } });
+        if (existeRut) return res.status(400).json({ message: 'Este RUT ya está registrado como empresa en la plataforma.' });
+
+        // Revisar Alias y Correo...
         const existeAlias = await prisma.empresas.findUnique({ where: { alias } });
         if (existeAlias) return res.status(400).json({ message: 'El alias ya está en uso.' });
 
         const existeEmail = await prisma.usuarios.findUnique({ where: { email: email_admin } });
         if (existeEmail) return res.status(400).json({ message: 'Correo ya registrado.' });
 
+        // Generación de contraseña...
         const passwordFinal = password_admin || process.env.DEFAULT_PASSWORD || 'Cambiar123*';
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(passwordFinal, salt);
         const debeCambiar = !password_admin || password_admin.trim() === '';
 
+        // Transacción...
         const nuevaMaestranza = await prisma.$transaction(async (tx) => {
             const empresa = await tx.empresas.create({
                 data: {
                     nombre: nombre_empresa,
-                    rut: rut_empresa,
-                    alias: alias, // Guardamos como alias
+                    rut: rutFormateado, // 👈 Se guarda purificado
+                    alias: alias,
                     activo: true,
-                    plan_id: parseInt(plan_id) 
+                    plan_id: parseInt(plan_id)
                 }
             });
 
@@ -60,8 +75,11 @@ const crearMaestranza = async (req, res) => {
 const obtenerMaestranzas = async (req, res) => {
     try {
         const empresas = await prisma.empresas.findMany({
+            where: {
+                rut: { not: '99999999-9' } // Ocultar el Tenant Maestro de la tabla
+            },
             include: {
-                usuarios: { where: { rol: 'admin' }, take: 1 },
+                usuarios: { where: { rol: { in: ['admin', 'super_admin'] } }, take: 1 },
                 planes: true
             },
             orderBy: { created_at: 'desc' }
@@ -91,6 +109,17 @@ const editarMaestranza = async (req, res) => {
         const { id } = req.params;
         const { nombre_empresa, rut_empresa, alias, activo, plan_id, admin_id, nombre_admin, email_admin, password_admin } = req.body;
 
+        if (!validateRut(rut_empresa)) {
+            return res.status(400).json({ message: 'El RUT proporcionado es inválido.' });
+        }
+
+        const rutFormateado = formatRutForDB(rut_empresa);
+
+        const existeRut = await prisma.empresas.findFirst({
+            where: { rut: rutFormateado, NOT: { id: parseInt(id) } }
+        });
+        if (existeRut) return res.status(400).json({ message: 'El RUT ya se encuentra registrado por otra Maestranza.' });
+
         const existeAlias = await prisma.empresas.findFirst({
             where: { alias, NOT: { id: parseInt(id) } }
         });
@@ -101,7 +130,7 @@ const editarMaestranza = async (req, res) => {
                 where: { id: parseInt(id) },
                 data: {
                     nombre: nombre_empresa,
-                    rut: rut_empresa,
+                    rut: rutFormateado, // Actualizamos RUT limpio
                     alias: alias, // Actualizamos alias
                     plan_id: plan_id ? parseInt(plan_id) : null,
                     activo: activo === 'true' || activo === true
@@ -110,7 +139,7 @@ const editarMaestranza = async (req, res) => {
 
             if (admin_id) {
                 const adminData = { nombre: nombre_admin, email: email_admin };
-                
+
                 if (password_admin && password_admin.trim() !== '') {
                     const salt = await bcrypt.genSalt(10);
                     adminData.password = await bcrypt.hash(password_admin, salt);
