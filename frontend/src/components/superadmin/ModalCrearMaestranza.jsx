@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { formatRut, validateRut } from '../../utils/rut';
+import api from '../../utils/api';
 
 export default function ModalCrearMaestranza({ isOpen, onClose, onSubmit }) {
     const [formData, setFormData] = useState({
@@ -8,6 +9,22 @@ export default function ModalCrearMaestranza({ isOpen, onClose, onSubmit }) {
     });
 
     const [errorRut, setErrorRut] = useState('');
+    const [planes, setPlanes] = useState([]);
+
+    useEffect(() => {
+        if (isOpen) {
+            const cargarPlanes = async () => {
+                try {
+                    const { data } = await api.get('/api/superadmin/planes');
+                    // Mostrar solo planes marcados como "activo" en la base de datos
+                    setPlanes(data.filter(p => p.activo));
+                } catch (error) {
+                    console.error('Error al cargar la lista de planes:', error);
+                }
+            };
+            cargarPlanes();
+        }
+    }, [isOpen]);
 
     // Formateo en tiempo real del RUT y llenado de datos
     const handleChange = (e) => {
@@ -71,9 +88,11 @@ export default function ModalCrearMaestranza({ isOpen, onClose, onSubmit }) {
                                     <label className="block text-xs font-medium text-txt-primary mb-1">Plan</label>
                                     <select name="plan_id" value={formData.plan_id} onChange={handleChange} required className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-sm text-txt-primary focus:ring-1 focus:ring-brand">
                                         <option value="" disabled>Seleccionar...</option>
-                                        <option value="1">Básico</option>
-                                        <option value="2">Pro</option>
-                                        <option value="3">Enterprise</option>
+                                        {planes.map(plan => (
+                                            <option key={plan.id} value={plan.id}>
+                                                {plan.nombre} ({plan.limite_usuarios} usr) - ${Number(plan.precio_mensual).toLocaleString('es-CL')}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
                             </div>
