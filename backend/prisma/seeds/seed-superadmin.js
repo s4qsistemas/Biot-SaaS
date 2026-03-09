@@ -19,6 +19,9 @@ async function main() {
     const planPro = await prisma.planes.upsert({ where: { id: 2 }, update: {}, create: { id: 2, nombre: 'Pro', limite_usuarios: 20, precio_mensual: 50000 } });
     const planEnterprise = await prisma.planes.upsert({ where: { id: 3 }, update: {}, create: { id: 3, nombre: 'Enterprise', limite_usuarios: 999, precio_mensual: 150000 } });
 
+    await prisma.$executeRaw`SELECT setval('planes_id_seq', (SELECT MAX(id) FROM planes))`;
+    console.log('✅ Contador de IDs de planes sincronizado.');
+
     // 2. CREAR EL TENANT MAESTRO (Asignándole el Plan Enterprise)
     const masterTenant = await prisma.empresas.upsert({
         where: { alias: 'biot' },

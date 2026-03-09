@@ -159,4 +159,63 @@ const editarMaestranza = async (req, res) => {
     }
 };
 
-module.exports = { crearMaestranza, obtenerMaestranzas, editarMaestranza };
+// ==========================================
+// MÓDULO DE PLANES SAAS
+// ==========================================
+
+const obtenerPlanes = async (req, res) => {
+    try {
+        const planes = await prisma.planes.findMany({
+            orderBy: { precio_mensual: 'asc' }
+        });
+        res.json(planes);
+    } catch (error) {
+        console.error('Error al obtener planes:', error);
+        res.status(500).json({ message: 'Error al cargar los planes' });
+    }
+};
+
+const crearPlan = async (req, res) => {
+    try {
+        const { nombre, limite_usuarios, precio_mensual } = req.body;
+        if (!nombre || limite_usuarios == null || precio_mensual == null) {
+            return res.status(400).json({ message: 'Faltan campos obligatorios' });
+        }
+
+        const nuevoPlan = await prisma.planes.create({
+            data: {
+                nombre,
+                limite_usuarios: parseInt(limite_usuarios),
+                precio_mensual: parseFloat(precio_mensual),
+                activo: true
+            }
+        });
+        res.status(201).json({ ok: true, data: nuevoPlan });
+    } catch (error) {
+        console.error('Error al crear plan:', error);
+        res.status(500).json({ message: 'Error interno al crear el plan' });
+    }
+};
+
+const editarPlan = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { nombre, limite_usuarios, precio_mensual, activo } = req.body;
+
+        const planActualizado = await prisma.planes.update({
+            where: { id: parseInt(id) },
+            data: {
+                nombre,
+                limite_usuarios: parseInt(limite_usuarios),
+                precio_mensual: parseFloat(precio_mensual),
+                activo: activo === 'true' || activo === true
+            }
+        });
+        res.json({ ok: true, data: planActualizado });
+    } catch (error) {
+        console.error('Error al editar plan:', error);
+        res.status(500).json({ message: 'Error al actualizar el plan' });
+    }
+};
+
+module.exports = { crearMaestranza, obtenerMaestranzas, editarMaestranza, obtenerPlanes, crearPlan, editarPlan };

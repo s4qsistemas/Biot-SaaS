@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 import ModalCrearMaestranza from '../components/superadmin/ModalCrearMaestranza';
 import ModalEditarMaestranza from '../components/superadmin/ModalEditarMaestranza';
+import ModalGestionPlanes from '../components/superadmin/ModalGestionPlanes';
 
 export default function SuperAdminDashboard() {
     const { user } = useAuth();
@@ -16,6 +17,8 @@ export default function SuperAdminDashboard() {
     // 👈 2. Nuevos Estados Modal Editar
     const [isModalEditarOpen, setIsModalEditarOpen] = useState(false);
     const [empresaAEditar, setEmpresaAEditar] = useState(null);
+
+    const [isModalPlanesOpen, setIsModalPlanesOpen] = useState(false);
 
     const cargarEmpresas = async () => {
         try {
@@ -69,9 +72,14 @@ export default function SuperAdminDashboard() {
                     <h1 className="text-2xl font-bold text-brand">Panel de Control SaaS</h1>
                     <p className="text-sm text-txt-secondary">Bienvenido, {user?.nombre || 'Super Admin'}.</p>
                 </div>
-                <button onClick={() => setIsModalCrearOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-brand text-white font-medium rounded-lg hover:bg-brand-dark transition-colors shadow-sm">
-                    Nueva Maestranza
-                </button>
+                <div className="flex gap-3">
+                    <button onClick={() => setIsModalPlanesOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-dark-surface border border-dark-border text-txt-primary font-medium rounded-lg hover:border-brand transition-colors shadow-sm">
+                        ⚙️ Gestionar Planes
+                    </button>
+                    <button onClick={() => setIsModalCrearOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-brand text-white font-medium rounded-lg hover:bg-brand-dark transition-colors shadow-sm">
+                        Nueva Maestranza
+                    </button>
+                </div>
             </div>
 
             <section className="bg-dark-surface rounded-2xl shadow-xl border border-dark-border p-6 max-w-6xl mx-auto">
@@ -136,6 +144,11 @@ export default function SuperAdminDashboard() {
                 onClose={() => setIsModalEditarOpen(false)}
                 onSubmit={handleEditarMaestranza}
                 empresaData={empresaAEditar}
+            />
+
+            <ModalGestionPlanes
+                isOpen={isModalPlanesOpen}
+                onClose={() => setIsModalPlanesOpen(false)}
             />
         </div>
     );
