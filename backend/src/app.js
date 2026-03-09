@@ -20,6 +20,7 @@ const inventarioRoutes = require('./routes/inventario.routes');
 const entidadesRoutes = require('./routes/entidades.routes');
 const cotizacionesRoutes = require('./routes/cotizaciones.routes');
 const ordenesTrabajoRoutes = require('./routes/ordenes_trabajo.routes');
+const superAdminRoutes = require('./routes/superAdminRoutes');
 // const dashboardRoutes = require('./routes/dashboard.routes');
 
 // --- Definir Rutas ---
@@ -30,6 +31,7 @@ app.use('/api/inventario', inventarioRoutes);
 app.use('/api/entidades', entidadesRoutes);
 app.use('/api/cotizaciones', cotizacionesRoutes);
 app.use('/api/ordenes-trabajo', ordenesTrabajoRoutes);
+app.use('/api/superadmin', superAdminRoutes);
 // app.use('/api/dashboard', dashboardRoutes);
 
 app.get('/', (req, res) => {

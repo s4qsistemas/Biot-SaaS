@@ -1,13 +1,14 @@
 -- CreateEnum
-CREATE TYPE "Rol" AS ENUM ('admin', 'jefe_taller', 'administrativo', 'operario');
+CREATE TYPE "Rol" AS ENUM ('super_admin', 'admin', 'gerente', 'jefe_taller', 'administrativo', 'operario');
 
 -- CreateTable
 CREATE TABLE "empresas" (
     "id" SERIAL NOT NULL,
     "nombre" VARCHAR(255) NOT NULL,
     "rut" VARCHAR(20),
-    "subdominio" VARCHAR(100),
+    "alias" VARCHAR(100),
     "activo" BOOLEAN NOT NULL DEFAULT true,
+    "plan_id" INTEGER,
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(6) NOT NULL,
 
@@ -23,6 +24,7 @@ CREATE TABLE "Usuarios" (
     "nombre" TEXT NOT NULL,
     "rol" "Rol" NOT NULL DEFAULT 'operario',
     "activo" BOOLEAN NOT NULL DEFAULT true,
+    "debe_cambiar_password" BOOLEAN NOT NULL DEFAULT false,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -293,8 +295,19 @@ CREATE TABLE "correos_internos" (
     CONSTRAINT "correos_internos_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "planes" (
+    "id" SERIAL NOT NULL,
+    "nombre" VARCHAR(50) NOT NULL,
+    "limite_usuarios" INTEGER NOT NULL DEFAULT 5,
+    "precio_mensual" DECIMAL(10,2) NOT NULL DEFAULT 0,
+    "activo" BOOLEAN NOT NULL DEFAULT true,
+
+    CONSTRAINT "planes_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
-CREATE UNIQUE INDEX "empresas_subdominio_key" ON "empresas"("subdominio");
+CREATE UNIQUE INDEX "empresas_alias_key" ON "empresas"("alias");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Usuarios_email_key" ON "Usuarios"("email");
@@ -322,6 +335,9 @@ CREATE UNIQUE INDEX "catalogo_tareas_tenant_id_codigo_key" ON "catalogo_tareas"(
 
 -- CreateIndex
 CREATE UNIQUE INDEX "correos_internos_tenant_id_email_key" ON "correos_internos"("tenant_id", "email");
+
+-- AddForeignKey
+ALTER TABLE "empresas" ADD CONSTRAINT "empresas_plan_id_fkey" FOREIGN KEY ("plan_id") REFERENCES "planes"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Usuarios" ADD CONSTRAINT "Usuarios_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "empresas"("id") ON DELETE CASCADE ON UPDATE CASCADE;

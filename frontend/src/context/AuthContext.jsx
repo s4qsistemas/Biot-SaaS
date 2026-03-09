@@ -1,23 +1,23 @@
 import { createContext, useState, useEffect, useContext } from 'react';
-import api from '../utils/api';
+import api from '../utils/api'; // Importamos nuestra nueva aduana
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
+    const [user, setUser] = useState(null); // Volvemos a null
     const [loading, setLoading] = useState(true);
 
-    // Check if user is logged in on mount
+    // Al recargar la página (F5), verificamos si el token sigue siendo válido
     useEffect(() => {
         const checkAuth = async () => {
             const token = localStorage.getItem('token');
             if (token) {
                 try {
-                    // Verify token by fetching user profile
-                    const { data } = await api.get('/auth/me');
+                    // Le preguntamos al backend quiénes somos
+                    const { data } = await api.get('/api/auth/me');
                     setUser(data);
                 } catch (error) {
-                    console.error('Auth verification failed:', error);
+                    console.error('Fallo en la verificación del token:', error);
                     localStorage.removeItem('token');
                 }
             }
@@ -28,9 +28,10 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const login = async (email, password) => {
-        const { data } = await api.post('/auth/login', { email, password });
-        localStorage.setItem('token', data.token);
-        setUser(data.user);
+        // Hacemos el POST real a tu backend
+        const { data } = await api.post('/api/auth/login', { email, password });
+        localStorage.setItem('token', data.token); // Guardamos el pasaporte
+        setUser(data.user); // Guardamos el perfil
         return data.user;
     };
 

@@ -1,30 +1,21 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import RoleGuard from './components/RoleGuard';
-import { PERMISOS } from './config/permissions'; // 👈 Importamos el llavero
+import { PERMISOS } from './config/permissions'; 
 
-// Layouts y Pages
 import DashboardLayout from './layouts/DashboardLayout';
+import SuperAdminDashboard from './pages/SuperAdminDashboard';
+
+// 👇 IMPORTAMOS LAS NUEVAS PÁGINAS REALES
+import Portal from './pages/Portal';
 import Login from './pages/Login';
-import Entidades from './pages/Entidades';
-import Inventario from './pages/Inventario';
-import Cotizaciones from './pages/Cotizaciones';
-import Catalogos from './pages/Catalogos';
-import Dashboard from './pages/Dashboard';
-import OrdenesTrabajo from './pages/OrdenesTrabajo';
+
+const DashboardTemporal = () => <div className="p-10 text-center font-bold text-gray-500">Dashboard Maestranza (En construcción)</div>;
 
 const PrivateRoute = () => {
-  const { isAuthenticated, loading } = useAuth();
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-dark-bg flex items-center justify-center text-brand">
-        Cargando sesión...
-      </div>
-    );
-  }
-
-  return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
+  const { loading } = useAuth();
+  if (loading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center text-[#2E7D32] font-semibold">Cargando sesión...</div>;
+  return <Outlet />; 
 };
 
 function App() {
@@ -33,43 +24,25 @@ function App() {
       <AuthProvider>
         <Routes>
 
-          {/* 🔓 Ruta Pública */}
+          {/* 🌍 RUTAS PÚBLICAS */}
+          <Route path="/" element={<Portal />} />
           <Route path="/login" element={<Login />} />
 
-          {/* 🔐 Rutas Privadas */}
+          {/* 🔐 RUTAS PRIVADAS */}
           <Route element={<PrivateRoute />}>
             <Route element={<DashboardLayout />}>
 
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-
-              {/* Módulos de Lectura Global (Todos pueden entrar a la vista, incluso Operarios) */}
-              <Route element={<RoleGuard permiso={PERMISOS.INVENTARIO_LEER} />}>
-                <Route path="/inventario" element={<Inventario />} />
+              <Route element={<RoleGuard permiso={PERMISOS.SAAS_CREAR_EMPRESA} />}>
+                  <Route path="/root" element={<SuperAdminDashboard />} />
               </Route>
 
-              <Route element={<RoleGuard permiso={PERMISOS.CATALOGOS_LEER} />}>
-                <Route path="/catalogos" element={<Catalogos />} />
-              </Route>
+              <Route path="/dashboard" element={<DashboardTemporal />} />
 
-              <Route element={<RoleGuard permiso={PERMISOS.ENTIDADES_LEER} />}>
-                <Route path="/entidades" element={<Entidades />} />
-              </Route>
-
-              <Route element={<RoleGuard permiso={PERMISOS.OT_LEER} />}>
-                <Route path="/ordenes-trabajo" element={<OrdenesTrabajo />} />
-              </Route>
-
-              {/* Módulo Restringido (Operarios bloqueados de ver esta pantalla) */}
-              <Route element={<RoleGuard permiso={PERMISOS.COTIZACIONES_LEER} />}>
-                <Route path="/cotizaciones" element={<Cotizaciones />} />
-              </Route>
+              {/* Redirección por si escriben una URL que no existe */}
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
 
             </Route>
           </Route>
-
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
 
         </Routes>
       </AuthProvider>

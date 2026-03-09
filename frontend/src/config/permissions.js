@@ -10,14 +10,17 @@ export const ROLES = {
 };
 
 export const PERMISOS = {
-    // --- LECTURA DE MÓDULOS (Para proteger las Rutas) ---
+    // 👇 LA LLAVE QUE FALTABA PARA EL SAAS 👇
+    SAAS_CREAR_EMPRESA: [ROLES.SUPER_ADMIN],
+
+    // --- LECTURA DE MÓDULOS ---
     CATALOGOS_LEER: Object.values(ROLES),
     INVENTARIO_LEER: Object.values(ROLES),
     ENTIDADES_LEER: Object.values(ROLES),
     OT_LEER: Object.values(ROLES),
     COTIZACIONES_LEER: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.GERENTE, ROLES.JEFE_TALLER, ROLES.ADMINISTRATIVO],
 
-    // --- ACCIONES ESPECÍFICAS (Para ocultar botones dentro de las vistas) ---
+    // --- ACCIONES ESPECÍFICAS ---
     CATALOGOS_ESCRIBIR: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.GERENTE, ROLES.JEFE_TALLER, ROLES.ADMINISTRATIVO],
     INVENTARIO_MOVER: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.GERENTE, ROLES.JEFE_TALLER, ROLES.ADMINISTRATIVO],
     INVENTARIO_INICIALIZAR: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.GERENTE, ROLES.JEFE_TALLER],
@@ -27,7 +30,6 @@ export const PERMISOS = {
     OT_OPERACION_TALLER: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.GERENTE, ROLES.JEFE_TALLER]
 };
 
-// Función helper para usar en tus componentes (ej: ocultar el botón "Crear Cotización")
 export const tienePermiso = (userRole, accionPermitida) => {
     if (!userRole) return false;
     return accionPermitida.includes(userRole);

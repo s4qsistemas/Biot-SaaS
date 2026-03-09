@@ -8,7 +8,7 @@ const { ROLES } = require('../config/permissions'); // Tu diccionario de roles
 // ==========================================
 const registrarEmpresaYAdmin = async (req, res) => {
     try {
-        const { nombre_empresa, rut_empresa, subdominio, nombre_admin, email_admin, password_admin } = req.body;
+        const { nombre_empresa, rut_empresa, alias, nombre_admin, email_admin, password_admin } = req.body;
 
         // 1. Encriptar la contraseña del nuevo cliente
         const hashedPassword = await hashPassword(password_admin);
@@ -21,7 +21,7 @@ const registrarEmpresaYAdmin = async (req, res) => {
                 data: {
                     nombre: nombre_empresa,
                     rut: rut_empresa,
-                    subdominio: subdominio
+                    alias: alias
                 }
             });
 
@@ -44,7 +44,7 @@ const registrarEmpresaYAdmin = async (req, res) => {
     } catch (error) {
         console.error("Error al registrar empresa:", error);
         if (error.code === 'P2002') {
-            return res.status(400).json({ message: "El email del admin o el subdominio ya están en uso." });
+            return res.status(400).json({ message: "El email del admin o el alias ya están en uso." });
         }
         res.status(500).json({ message: "Error interno al crear el cliente." });
     }
