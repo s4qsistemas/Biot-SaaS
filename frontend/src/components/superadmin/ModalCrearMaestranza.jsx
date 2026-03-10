@@ -3,9 +3,10 @@ import { formatRut, validateRut } from '../../utils/rut';
 import api from '../../utils/api';
 
 export default function ModalCrearMaestranza({ isOpen, onClose, onSubmit }) {
+    // ELIMINADO: password_admin
     const [formData, setFormData] = useState({
         nombre_empresa: '', rut_empresa: '', alias: '', plan_id: '',
-        nombre_admin: '', email_admin: '', password_admin: ''
+        nombre_admin: '', email_admin: ''
     });
 
     const [errorRut, setErrorRut] = useState('');
@@ -16,7 +17,6 @@ export default function ModalCrearMaestranza({ isOpen, onClose, onSubmit }) {
             const cargarPlanes = async () => {
                 try {
                     const { data } = await api.get('/api/superadmin/planes');
-                    // Mostrar solo planes marcados como "activo" en la base de datos
                     setPlanes(data.filter(p => p.activo));
                 } catch (error) {
                     console.error('Error al cargar la lista de planes:', error);
@@ -26,13 +26,12 @@ export default function ModalCrearMaestranza({ isOpen, onClose, onSubmit }) {
         }
     }, [isOpen]);
 
-    // Formateo en tiempo real del RUT y llenado de datos
     const handleChange = (e) => {
         let { name, value } = e.target;
 
         if (name === 'rut_empresa') {
             value = formatRut(value);
-            setErrorRut(''); // Limpiar error si está escribiendo
+            setErrorRut('');
         }
 
         setFormData({ ...formData, [name]: value });
@@ -41,17 +40,15 @@ export default function ModalCrearMaestranza({ isOpen, onClose, onSubmit }) {
     const handleFormSubmit = (e) => {
         e.preventDefault();
 
-        // 🛡️ VALIDACIÓN DEL RUT ANTES DE ENVIAR
         if (!validateRut(formData.rut_empresa)) {
             setErrorRut('El RUT ingresado no es válido');
             return;
         }
 
-        // Si pasa, enviamos los datos al componente padre (SuperAdminDashboard)
         onSubmit(formData);
 
-        // Limpiamos el form
-        setFormData({ nombre_empresa: '', rut_empresa: '', alias: '', plan_id: '', nombre_admin: '', email_admin: '', password_admin: '' });
+        // Limpiamos el form (sin password_admin)
+        setFormData({ nombre_empresa: '', rut_empresa: '', alias: '', plan_id: '', nombre_admin: '', email_admin: '' });
     };
 
     if (!isOpen) return null;
@@ -65,21 +62,23 @@ export default function ModalCrearMaestranza({ isOpen, onClose, onSubmit }) {
                 </div>
 
                 <form onSubmit={handleFormSubmit} className="p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 gap-6">
 
                         {/* EMPRESA */}
                         <div className="space-y-4">
                             <h4 className="text-sm font-bold text-brand mb-3 border-b border-dark-border pb-1">1. Datos de la Empresa</h4>
-                            <div>
-                                <label className="block text-xs font-medium text-txt-primary mb-1">Razón Social</label>
-                                <input type="text" name="nombre_empresa" value={formData.nombre_empresa} onChange={handleChange} required className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-sm text-txt-primary focus:ring-1 focus:ring-brand" />
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-medium text-txt-primary mb-1">Razón Social</label>
+                                    <input type="text" name="nombre_empresa" value={formData.nombre_empresa} onChange={handleChange} required className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-sm text-txt-primary focus:ring-1 focus:ring-brand" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-txt-primary mb-1">RUT</label>
+                                    <input type="text" name="rut_empresa" value={formData.rut_empresa} onChange={handleChange} required className={`w-full bg-dark-bg border rounded-lg px-3 py-2 text-sm text-txt-primary focus:ring-1 focus:outline-none ${errorRut ? 'border-red-500 focus:ring-red-500' : 'border-dark-border focus:ring-brand'}`} placeholder="12.345.678-9" />
+                                    {errorRut && <p className="text-red-500 text-[10px] mt-1">{errorRut}</p>}
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-xs font-medium text-txt-primary mb-1">RUT</label>
-                                <input type="text" name="rut_empresa" value={formData.rut_empresa} onChange={handleChange} required className={`w-full bg-dark-bg border rounded-lg px-3 py-2 text-sm text-txt-primary focus:ring-1 focus:outline-none ${errorRut ? 'border-red-500 focus:ring-red-500' : 'border-dark-border focus:ring-brand'}`} placeholder="12.345.678-9" />
-                                {errorRut && <p className="text-red-500 text-[10px] mt-1">{errorRut}</p>}
-                            </div>
-                            <div className="grid grid-cols-2 gap-2">
+                            <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-medium text-txt-primary mb-1">Alias (URL)</label>
                                     <input type="text" name="alias" value={formData.alias} onChange={handleChange} required className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-sm text-txt-primary focus:ring-1 focus:ring-brand" placeholder="mi-empresa" />
@@ -101,18 +100,23 @@ export default function ModalCrearMaestranza({ isOpen, onClose, onSubmit }) {
                         {/* ADMIN */}
                         <div className="space-y-4">
                             <h4 className="text-sm font-bold text-brand mb-3 border-b border-dark-border pb-1">2. Cuenta Administrador</h4>
-                            <div>
-                                <label className="block text-xs font-medium text-txt-primary mb-1">Nombre</label>
-                                <input type="text" name="nombre_admin" value={formData.nombre_admin} onChange={handleChange} required className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-sm text-txt-primary focus:ring-1 focus:ring-brand" />
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-medium text-txt-primary mb-1">Nombre</label>
+                                    <input type="text" name="nombre_admin" value={formData.nombre_admin} onChange={handleChange} required className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-sm text-txt-primary focus:ring-1 focus:ring-brand" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-txt-primary mb-1">Correo Electrónico</label>
+                                    <input type="email" name="email_admin" value={formData.email_admin} onChange={handleChange} required className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-sm text-txt-primary focus:ring-1 focus:ring-brand" />
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-xs font-medium text-txt-primary mb-1">Correo Electrónico</label>
-                                <input type="email" name="email_admin" value={formData.email_admin} onChange={handleChange} required className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-sm text-txt-primary focus:ring-1 focus:ring-brand" />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-medium text-txt-primary mb-1">Contraseña (Opcional)</label>
-                                <input type="text" name="password_admin" value={formData.password_admin} onChange={handleChange} className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-sm text-txt-primary placeholder-dark-border focus:ring-1 focus:ring-brand" placeholder="Dejar en blanco para usar Genérica" />
-                                <p className="text-[10px] text-txt-secondary mt-1">Si está en blanco, usará la clave del sistema y forzará su cambio en el 1° login.</p>
+
+                            {/* NUEVO AVISO DE SEGURIDAD EN VEZ DEL INPUT */}
+                            <div className="mt-2 p-3 bg-blue-900/20 border border-blue-500/30 rounded-lg flex items-start gap-3">
+                                <span className="text-blue-400 mt-0.5">ℹ️</span>
+                                <p className="text-xs text-blue-200/80 leading-relaxed">
+                                    <strong>Privacidad por diseño:</strong> La contraseña inicial será la clave genérica del sistema. El usuario será forzado a crear su propia contraseña al iniciar sesión por primera vez.
+                                </p>
                             </div>
                         </div>
                     </div>

@@ -6,12 +6,12 @@ export default function ModalEditarMaestranza({ isOpen, onClose, onSubmit, empre
     const [activeTab, setActiveTab] = useState('empresa');
     const [planes, setPlanes] = useState([]);
 
+    // ELIMINADO password_admin, AÑADIDO reset_password
     const [formData, setFormData] = useState({
         nombre_empresa: '', rut_empresa: '', alias: '', activo: true, plan_id: '',
-        admin_id: null, nombre_admin: '', email_admin: '', password_admin: ''
+        admin_id: null, nombre_admin: '', email_admin: '', reset_password: false
     });
 
-    // 🔄 Pre-cargar los datos cuando se abre el modal con una empresa específica
     useEffect(() => {
         if (empresaData && isOpen) {
             setFormData({
@@ -23,19 +23,17 @@ export default function ModalEditarMaestranza({ isOpen, onClose, onSubmit, empre
                 admin_id: empresaData.admin_id || null,
                 nombre_admin: empresaData.admin_nombre || '',
                 email_admin: empresaData.admin_email || '',
-                password_admin: '' // Siempre oculto por seguridad
+                reset_password: false // Siempre entra en falso por seguridad
             });
-            setActiveTab('empresa'); // Reiniciar a la primera pestaña
+            setActiveTab('empresa');
         }
     }, [empresaData, isOpen]);
 
-    // 🔄 Cargar planes dinámicamente
     useEffect(() => {
         if (isOpen) {
             const cargarPlanes = async () => {
                 try {
                     const { data } = await api.get('/api/superadmin/planes');
-                    // Mostrar solo planes marcados como "activo" en la base de datos
                     setPlanes(data.filter(p => p.activo));
                 } catch (error) {
                     console.error('Error al cargar la lista de planes:', error);
@@ -47,6 +45,7 @@ export default function ModalEditarMaestranza({ isOpen, onClose, onSubmit, empre
 
     const handleChange = (e) => {
         let { name, value, type, checked } = e.target;
+        // Si es checkbox, toma 'checked', si no, toma 'value'
         let finalValue = type === 'checkbox' ? checked : value;
 
         if (name === 'rut_empresa') {
@@ -58,8 +57,6 @@ export default function ModalEditarMaestranza({ isOpen, onClose, onSubmit, empre
 
     const handleFormSubmit = (e) => {
         e.preventDefault();
-
-        // Enviamos el ID y los datos al padre
         onSubmit(empresaData.id, formData);
     };
 
@@ -156,10 +153,28 @@ export default function ModalEditarMaestranza({ isOpen, onClose, onSubmit, empre
                                     <input type="email" name="email_admin" value={formData.email_admin} onChange={handleChange} required className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-sm text-txt-primary focus:ring-1 focus:ring-brand" />
                                 </div>
                             </div>
-                            <div>
-                                <label className="block text-xs font-medium text-txt-primary mb-1">Nueva Contraseña (Opcional)</label>
-                                <input type="text" name="password_admin" value={formData.password_admin} onChange={handleChange} className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-sm text-txt-primary placeholder-dark-border focus:ring-1 focus:ring-brand" placeholder="Dejar en blanco para no cambiarla" />
+
+                            {/* EL BOTÓN DE PÁNICO (CHECKBOX DE RESET) */}
+                            <div className="mt-4 p-4 border border-red-900/50 bg-red-900/10 rounded-lg">
+                                <label className="flex items-start gap-3 cursor-pointer group">
+                                    <div className="flex items-center h-5">
+                                        <input
+                                            type="checkbox"
+                                            name="reset_password"
+                                            checked={formData.reset_password}
+                                            onChange={handleChange}
+                                            className="w-4 h-4 rounded border-dark-border bg-dark-bg text-brand focus:ring-brand focus:ring-offset-dark-surface"
+                                        />
+                                    </div>
+                                    <div>
+                                        <span className="text-sm font-semibold text-red-400 group-hover:text-red-300 transition-colors">Resetear contraseña del usuario</span>
+                                        <p className="text-xs text-txt-secondary mt-1">
+                                            Al guardar, la contraseña volverá a ser la clave genérica del sistema. El usuario será expulsado y forzado a crear una nueva al reingresar.
+                                        </p>
+                                    </div>
+                                </label>
                             </div>
+
                         </div>
                     )}
 
