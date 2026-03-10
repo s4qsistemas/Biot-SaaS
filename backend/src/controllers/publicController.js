@@ -1,6 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const { validateRut, formatRutForDB } = require('../utils/rut');
+const { enviarContactoN8n } = require('../services/n8n.service');
 
 const prisma = new PrismaClient();
 
@@ -64,4 +65,31 @@ const registrarEmpresa = async (req, res) => {
     }
 };
 
-module.exports = { registrarEmpresa };
+const procesarContacto = async (req, res) => {
+    try {
+        const { nombre, email, telefono, mensaje } = req.body;
+
+        if (!nombre || !email || !mensaje) {
+            return res.status(400).json({ message: 'El nombre, email y mensaje son obligatorios.' });
+        }
+
+        // Armamos el payload limpio para N8N
+        const payloadN8n = {
+            origen: 'Formulario Web Biot SaaS',
+            fecha: new Date().toISOString(),
+            contacto: { nombre, email, telefono: telefono || 'No provisto' },
+            mensaje: mensaje
+        };
+
+        // Disparamos el webhook
+        await enviarContactoN8n(payloadN8n);
+
+        res.status(200).json({ ok: true, message: '¡Mensaje enviado con éxito! Nos pondremos en contacto pronto.' });
+
+    } catch (error) {
+        console.error('Error en procesarContacto:', error);
+        res.status(500).json({ message: 'Hubo un error al enviar el mensaje.' });
+    }
+};
+
+module.exports = { registrarEmpresa, procesarContacto };

@@ -77,9 +77,9 @@ export default function Home() {
             <footer id="contacto" className="bg-dark-surface py-16 text-center border-t border-dark-border mt-auto">
                 <h2 className="text-2xl font-bold mb-4 text-txt-primary">¿Listo para transformar tu maestranza?</h2>
                 <p className="text-txt-secondary mb-8 max-w-lg mx-auto">Contáctanos para agendar una demostración y descubrir cómo optimizar tus procesos operativos.</p>
-                <a href="mailto:contacto@biot.cl" className="inline-block px-8 py-3 rounded-xl border border-brand text-brand font-semibold hover:bg-brand hover:text-white transition-colors">
-                    contacto@biot.cl
-                </a>
+                <Link to="/contacto" className="text-lg font-bold bg-brand text-white px-8 py-3 rounded-xl hover:bg-brand-dark transition-colors shadow-lg">
+                    Contacto
+                </Link>
             </footer>
 
         </div>

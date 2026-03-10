@@ -1,11 +1,11 @@
 const axios = require('axios');
 
-// Tu URL exacta del webhook de n8n
-const N8N_WEBHOOK_URL = 'https://n8n.biogps.cl/webhook/cot-biot';
-
+// --- FUNCIÓN ORIGINAL (Cotizaciones y PDFs) ---
 const enviarWebhookN8n = async (payload) => {
     try {
-        // 1. Clonamos el payload solo para la consola y truncamos el Base64 para no inundar la terminal
+        const webhookUrl = process.env.N8N_WEBHOOK_URL;
+        if (!webhookUrl) throw new Error("La variable N8N_WEBHOOK_URL no existe en el .env");
+
         const payloadParaConsola = {
             ...payload,
             pdf_base64: payload.pdf_base64
@@ -14,15 +14,13 @@ const enviarWebhookN8n = async (payload) => {
         };
 
         console.log("\n==========================================");
-        console.log("🚀 DISPARANDO WEBHOOK A N8N...");
-        console.log("URL Destino:", N8N_WEBHOOK_URL);
+        console.log("🚀 DISPARANDO WEBHOOK DE COTIZACIÓN A N8N...");
+        console.log("URL Destino:", webhookUrl);
         console.log("📦 PAYLOAD ENVIADO:");
         console.log(JSON.stringify(payloadParaConsola, null, 2));
 
-        // 2. Disparamos la petición POST REAL con los datos completos
-        const response = await axios.post(N8N_WEBHOOK_URL, payload);
+        const response = await axios.post(webhookUrl, payload);
 
-        // 3. Imprimimos la respuesta exitosa de n8n
         console.log("✅ RESPUESTA RECIBIDA DESDE N8N:");
         console.log("Status Code:", response.status);
         console.log("Data:", JSON.stringify(response.data, null, 2));
@@ -31,22 +29,37 @@ const enviarWebhookN8n = async (payload) => {
         return response.data;
     } catch (error) {
         console.log("\n==========================================");
-        console.error("❌ ERROR AL CONECTAR CON N8N:");
-
-        // Si n8n respondió, pero con un error (Ej: 400 Bad Request, 500 Server Error)
+        console.error("❌ ERROR AL CONECTAR CON N8N (COTIZACIÓN):");
         if (error.response) {
             console.error("Status de Error:", error.response.status);
             console.error("Respuesta de n8n:", JSON.stringify(error.response.data, null, 2));
         } else {
-            // Si n8n está caído o hay un error de red
             console.error("Mensaje de Error:", error.message);
         }
         console.log("==========================================\n");
-
         throw new Error('Fallo la conexión con el servidor de automatización (n8n).');
     }
 };
 
+// --- NUEVA FUNCIÓN EXCLUSIVA PARA CONTACTO ---
+const enviarContactoN8n = async (payload) => {
+    try {
+        const webhookContacto = process.env.N8N_WEBHOOK_CONTACTO;
+        if (!webhookContacto) throw new Error("La variable N8N_WEBHOOK_CONTACTO no existe en el .env");
+
+        console.log("\n🚀 Enviando formulario de contacto a N8N ->", webhookContacto);
+
+        const response = await axios.post(webhookContacto, payload);
+
+        console.log("✅ Contacto recibido por N8N con éxito.");
+        return response.data;
+    } catch (error) {
+        console.error("❌ Error enviando contacto a N8N:", error.message);
+        throw new Error('No se pudo enviar el mensaje. Intente más tarde.');
+    }
+};
+
 module.exports = {
-    enviarWebhookN8n
+    enviarWebhookN8n,
+    enviarContactoN8n
 };

@@ -10,6 +10,7 @@ import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Contacto from './pages/Contacto';
 
 const DashboardTemporal = () => <div className="p-10 text-center font-bold text-gray-500">Dashboard Maestranza (En construcción)</div>;
 
@@ -29,6 +30,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/contacto" element={<Contacto />} />
 
           {/* 🔐 RUTAS PRIVADAS */}
           <Route element={<PrivateRoute />}>
