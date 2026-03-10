@@ -39,8 +39,8 @@ const registrarEmpresa = async (req, res) => {
                     rut: rutFormateado,
                     alias: alias,
                     activo: true,
-                    plan_id: 1, // 👈 Se asigna Plan Básico (Asegúrate de que el ID 1 exista)
-                    fecha_vencimiento: fechaVencimiento // 👈 Comienza el Trial
+                    plan_id: 4,
+                    fecha_vencimiento: fechaVencimiento
                 }
             });
 

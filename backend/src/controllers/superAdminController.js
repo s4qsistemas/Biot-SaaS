@@ -31,11 +31,14 @@ const crearMaestranza = async (req, res) => {
         const existeEmail = await prisma.usuarios.findUnique({ where: { email: email_admin } });
         if (existeEmail) return res.status(400).json({ message: 'Correo ya registrado.' });
 
-        // Generación de contraseña...
-        const passwordFinal = password_admin || process.env.DEFAULT_PASSWORD || 'Cambiar123*';
+        // 👇 GENERACIÓN AUTOMÁTICA Y OBLIGATORIA
+        // Usamos la clave genérica del .env SIEMPRE
+        const passwordFinal = process.env.DEFAULT_PASSWORD || 'BiotSaaS2026*';
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(passwordFinal, salt);
-        const debeCambiar = !password_admin || password_admin.trim() === '';
+
+        // 🔒 SIEMPRE nace debiendo cambiar la clave
+        const debeCambiar = true;
 
         // Transacción...
         const nuevaMaestranza = await prisma.$transaction(async (tx) => {
@@ -140,9 +143,12 @@ const editarMaestranza = async (req, res) => {
             if (admin_id) {
                 const adminData = { nombre: nombre_admin, email: email_admin };
 
-                if (password_admin && password_admin.trim() !== '') {
+                // 👇 EL RESET: Si el SuperAdmin activó la opción de resetear
+                if (reset_password === true || reset_password === 'true') {
+                    const passwordFinal = process.env.DEFAULT_PASSWORD || 'BiotSaaS2026*';
                     const salt = await bcrypt.genSalt(10);
-                    adminData.password = await bcrypt.hash(password_admin, salt);
+                    adminData.password = await bcrypt.hash(passwordFinal, salt);
+                    adminData.debe_cambiar_password = true; // Lo mandamos directo a la jaula
                 }
 
                 await tx.usuarios.update({
