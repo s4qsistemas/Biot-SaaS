@@ -3,20 +3,34 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import RoleGuard from './components/RoleGuard';
 import { PERMISOS } from './config/permissions';
 
+// Layouts & Pages
 import DashboardLayout from './layouts/DashboardLayout';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
-
-// 👇 IMPORTAMOS LAS NUEVAS PÁGINAS REALES
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Contacto from './pages/Contacto';
+import AdminDashboard from './pages/AdminDashboard';
 
-const DashboardTemporal = () => <div className="p-10 text-center font-bold text-gray-500">Dashboard Maestranza (En construcción)</div>;
-
+// 🛡️ GUARDIA DE SEGURIDAD PARA RUTAS PRIVADAS
 const PrivateRoute = () => {
-  const { loading } = useAuth();
-  if (loading) return <div className="min-h-screen bg-gray-50 flex items-center justify-center text-[#2E7D32] font-semibold">Cargando sesión...</div>;
+  const { user, loading } = useAuth();
+
+  // 1. Esperamos a que AuthContext decida si hay token
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-dark-bg flex items-center justify-center text-brand font-semibold">
+        <span className="animate-pulse">Cargando plataforma...</span>
+      </div>
+    );
+  }
+
+  // 2. Si no hay usuario, patada de vuelta al login
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // 3. Si todo está en orden, pasa al Layout
   return <Outlet />;
 };
 
@@ -32,17 +46,19 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/contacto" element={<Contacto />} />
 
-          {/* 🔐 RUTAS PRIVADAS */}
+          {/* 🔐 RUTAS PRIVADAS (Blindadas por PrivateRoute) */}
           <Route element={<PrivateRoute />}>
             <Route element={<DashboardLayout />}>
 
+              {/* Acceso exclusivo SuperAdmin */}
               <Route element={<RoleGuard permiso={PERMISOS.SAAS_CREAR_EMPRESA} />}>
                 <Route path="/root" element={<SuperAdminDashboard />} />
               </Route>
 
-              <Route path="/dashboard" element={<DashboardTemporal />} />
+              {/* Dashboard general de las Maestranzas */}
+              <Route path="/dashboard" element={<AdminDashboard />} />
 
-              {/* Redirección por si escriben una URL que no existe */}
+              {/* Redirección salvavidas: Si inventan una URL, van al dashboard */}
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
 
             </Route>
