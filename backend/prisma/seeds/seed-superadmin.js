@@ -18,6 +18,7 @@ async function main() {
     const planBasico = await prisma.planes.upsert({ where: { id: 1 }, update: {}, create: { id: 1, nombre: 'Básico', limite_usuarios: 5, precio_mensual: 0 } });
     const planPro = await prisma.planes.upsert({ where: { id: 2 }, update: {}, create: { id: 2, nombre: 'Pro', limite_usuarios: 20, precio_mensual: 50000 } });
     const planEnterprise = await prisma.planes.upsert({ where: { id: 3 }, update: {}, create: { id: 3, nombre: 'Enterprise', limite_usuarios: 999, precio_mensual: 150000 } });
+    const planTrial = await prisma.planes.upsert({ where: { id: 4 }, update: {}, create: { id: 4, nombre: 'Trial 14 Días', limite_usuarios: 3, precio_mensual: 0, activo: false } });
 
     await prisma.$executeRaw`SELECT setval('planes_id_seq', (SELECT MAX(id) FROM planes))`;
     console.log('✅ Contador de IDs de planes sincronizado.');
