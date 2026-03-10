@@ -22,9 +22,15 @@ api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response && error.response.status === 401) {
-            console.warn('Sesión expirada o inválida. Redirigiendo al login...');
-            localStorage.removeItem('token');
-            window.location.href = '/login';
+            // 🛡️ EXCEPCIÓN: Si el error 401 viene del intento de Login, NO recargamos la página.
+            // Queremos que el componente Login.jsx atrape el error y lo muestre en rojo.
+            const isLoginRequest = error.config && error.config.url.includes('/api/auth/login');
+            
+            if (!isLoginRequest) {
+                console.warn('Sesión expirada o inválida. Redirigiendo al login...');
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+            }
         }
         return Promise.reject(error);
     }

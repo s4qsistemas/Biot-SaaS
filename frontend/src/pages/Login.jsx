@@ -26,18 +26,25 @@ export default function Login() {
       if (user.rol === 'super_admin') {
         navigate('/root');
       } else {
-        navigate('/dashboard');
+        // 🔒 Verificar si debe cambiar la clave genérica
+        if (user.debe_cambiar_password) {
+          navigate('/cambiar-clave');
+        } else {
+          navigate('/dashboard');
+        }
       }
 
     } catch (err) {
-      setError("Error al iniciar sesión. Revisa tus credenciales.");
+      // Extraemos el mensaje exacto que envía el backend (ej: "Credenciales inválidas")
+      const errMsg = err.response?.data?.message || "Error al iniciar sesión. Revisa tus credenciales.";
+      setError(errMsg);
     }
   };
 
   return (
     <div className="min-h-screen bg-dark-bg flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <h2 className="text-3xl font-extrabold text-brand">Biot SaaS</h2>
+        <Link to="/" className="text-3xl font-extrabold text-brand">Biot SaaS</Link>
         <p className="mt-2 text-sm text-txt-secondary">Ingresa a tu panel de control</p>
       </div>
 

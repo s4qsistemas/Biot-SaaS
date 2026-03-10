@@ -24,17 +24,24 @@ const superAdminRoutes = require('./routes/superAdminRoutes');
 const publicRoutes = require('./routes/publicRoutes');
 // const dashboardRoutes = require('./routes/dashboard.routes');
 
-// --- Definir Rutas ---
+// --- Importar Middleware de Jaula ---
+const checkPasswordChange = require('./middleware/checkPasswordChange');
+const { authenticate } = require('./middleware/authMiddleware');
+
+// --- Definir Rutas Exentas ---
 app.use('/api/auth', authRoutes);
-app.use('/api/usuarios', usuariosRoutes);
-app.use('/api/catalogos', catalogosRoutes);
-app.use('/api/inventario', inventarioRoutes);
-app.use('/api/entidades', entidadesRoutes);
-app.use('/api/cotizaciones', cotizacionesRoutes);
-app.use('/api/ordenes-trabajo', ordenesTrabajoRoutes);
-app.use('/api/superadmin', superAdminRoutes);
 app.use('/api/public', publicRoutes);
-// app.use('/api/dashboard', dashboardRoutes);
+
+// --- Definir Rutas Protegidas (Requieren Token + No estar en la jaula) ---
+// Aplicamos el middleware de autenticación y de jaula a nivel de enrutador
+app.use('/api/usuarios', authenticate, checkPasswordChange, usuariosRoutes);
+app.use('/api/catalogos', authenticate, checkPasswordChange, catalogosRoutes);
+app.use('/api/inventario', authenticate, checkPasswordChange, inventarioRoutes);
+app.use('/api/entidades', authenticate, checkPasswordChange, entidadesRoutes);
+app.use('/api/cotizaciones', authenticate, checkPasswordChange, cotizacionesRoutes);
+app.use('/api/ordenes-trabajo', authenticate, checkPasswordChange, ordenesTrabajoRoutes);
+app.use('/api/superadmin', authenticate, checkPasswordChange, superAdminRoutes);
+// app.use('/api/dashboard', authenticate, checkPasswordChange, dashboardRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Biot SaaS API is running' });
