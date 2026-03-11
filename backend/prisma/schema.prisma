@@ -42,6 +42,7 @@ model empresas {
   correos_internos     correos_internos[]
   unidades_stock       unidades_stock[]
   movimientos          movimientos[]
+  auditoria_empresas auditoria_empresas[]
 }
 
 // ------------------------------------------------------------------
@@ -71,6 +72,7 @@ model Usuarios {
 
   empresas    empresas      @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
   movimientos movimientos[]
+  auditorias_realizadas auditoria_empresas[]
 }
 
 model entidades {
@@ -383,4 +385,22 @@ model planes {
   activo          Boolean    @default(true)
   
   empresas        empresas[] // Un plan puede tener muchas empresas
+}
+
+// ------------------------------------------------------------------
+// MODELO DE AUDITORÍA Y TRAZABILIDAD
+// ------------------------------------------------------------------
+model auditoria_empresas {
+  id                Int      @id @default(autoincrement())
+  empresa_id        Int
+  tipo_evento       String   @db.VarChar(50) // Ej: 'CAMBIO_PLAN', 'CAMBIO_ESTADO', 'RESET_CLAVE'
+  valor_anterior    String?  @db.Text        // Qué había antes (Ej: 'Trial 14 Días')
+  valor_nuevo       String?  @db.Text        // Qué hay ahora (Ej: 'Pro')
+  justificacion     String   @db.Text        // Obligatorio para el administrativo
+  modificado_por_id Int                      // ID del SuperAdmin que ejecutó la acción
+  created_at        DateTime @default(now()) @db.Timestamp(6)
+
+  // Relaciones
+  empresas          empresas @relation(fields: [empresa_id], references: [id], onDelete: Cascade)
+  usuarios          Usuarios @relation(fields: [modificado_por_id], references: [id])
 }

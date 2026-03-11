@@ -307,6 +307,20 @@ CREATE TABLE "planes" (
     CONSTRAINT "planes_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "auditoria_empresas" (
+    "id" SERIAL NOT NULL,
+    "empresa_id" INTEGER NOT NULL,
+    "tipo_evento" VARCHAR(50) NOT NULL,
+    "valor_anterior" TEXT,
+    "valor_nuevo" TEXT,
+    "justificacion" TEXT NOT NULL,
+    "modificado_por_id" INTEGER NOT NULL,
+    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "auditoria_empresas_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "empresas_rut_key" ON "empresas"("rut");
 
@@ -441,3 +455,9 @@ ALTER TABLE "catalogo_tareas" ADD CONSTRAINT "catalogo_tareas_tenant_id_fkey" FO
 
 -- AddForeignKey
 ALTER TABLE "correos_internos" ADD CONSTRAINT "correos_internos_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "empresas"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "auditoria_empresas" ADD CONSTRAINT "auditoria_empresas_empresa_id_fkey" FOREIGN KEY ("empresa_id") REFERENCES "empresas"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "auditoria_empresas" ADD CONSTRAINT "auditoria_empresas_modificado_por_id_fkey" FOREIGN KEY ("modificado_por_id") REFERENCES "Usuarios"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

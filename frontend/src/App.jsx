@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import RoleGuard from './components/RoleGuard';
 import { PERMISOS } from './config/permissions';
@@ -16,9 +16,9 @@ import CambiarClave from './pages/CambiarClave';
 // 🛡️ GUARDIA DE SEGURIDAD PARA RUTAS PRIVADAS
 const PrivateRoute = () => {
   const { user, loading } = useAuth();
-  
-  // OJO: usar href para evitar hooks dentro de condicionales extraños
-  const isCambiarClavePath = window.location.pathname === '/cambiar-clave';
+  const location = useLocation();
+
+  const isCambiarClavePath = location.pathname === '/cambiar-clave';
 
   if (loading) {
     return (
@@ -59,7 +59,7 @@ function App() {
 
           {/* 🔐 RUTAS PRIVADAS (Blindadas por PrivateRoute) */}
           <Route element={<PrivateRoute />}>
-            
+
             {/* 🛑 JAULA: Cambio de Clave Obligatorio (Sin el Layout del Dashboard) */}
             <Route path="/cambiar-clave" element={<CambiarClave />} />
 
