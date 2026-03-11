@@ -110,7 +110,7 @@ const obtenerMaestranzas = async (req, res) => {
 const editarMaestranza = async (req, res) => {
     try {
         const { id } = req.params;
-        const { nombre_empresa, rut_empresa, alias, activo, plan_id, admin_id, nombre_admin, email_admin, password_admin } = req.body;
+        const { nombre_empresa, rut_empresa, alias, activo, plan_id, admin_id, nombre_admin, email_admin, password_admin, reset_password } = req.body;
 
         if (!validateRut(rut_empresa)) {
             return res.status(400).json({ message: 'El RUT proporcionado es inválido.' });
