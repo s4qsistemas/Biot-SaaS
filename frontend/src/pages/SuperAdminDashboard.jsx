@@ -166,8 +166,9 @@ export default function SuperAdminDashboard() {
                                                 {/* 1. Botón Editar Datos */}
                                                 <button
                                                     onClick={() => abrirModalEditar(emp)}
-                                                    className="p-1.5 text-blue-400 bg-blue-400/10 hover:bg-blue-400/20 border border-blue-400/30 rounded-lg transition-colors"
-                                                    title="Editar Datos Básicos"
+                                                    disabled={emp.estado !== 'activa'}
+                                                    className={`p-1.5 rounded-lg transition-colors border ${emp.estado !== 'activa' ? 'opacity-50 cursor-not-allowed text-blue-400 bg-blue-400/10 border-blue-400/30' : 'text-blue-400 bg-blue-400/10 hover:bg-blue-400/20 border-blue-400/30'}`}
+                                                    title={emp.estado !== 'activa' ? 'No disponible para empresas suspendidas' : 'Editar Datos Básicos'}
                                                 >
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                                                 </button>
@@ -175,8 +176,9 @@ export default function SuperAdminDashboard() {
                                                 {/* 2. Botón Cambiar Plan */}
                                                 <button
                                                     onClick={() => abrirModalPlan(emp)}
-                                                    className="p-1.5 text-emerald-400 bg-emerald-400/10 hover:bg-emerald-400/20 border border-emerald-400/30 rounded-lg transition-colors"
-                                                    title="Modificar Plan de Suscripción"
+                                                    disabled={emp.estado !== 'activa'}
+                                                    className={`p-1.5 rounded-lg transition-colors border ${emp.estado !== 'activa' ? 'opacity-50 cursor-not-allowed text-emerald-400 bg-emerald-400/10 border-emerald-400/30' : 'text-emerald-400 bg-emerald-400/10 hover:bg-emerald-400/20 border-emerald-400/30'}`}
+                                                    title={emp.estado !== 'activa' ? 'No disponible para empresas suspendidas' : 'Modificar Plan de Suscripción'}
                                                 >
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
                                                 </button>
