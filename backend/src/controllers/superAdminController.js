@@ -204,6 +204,13 @@ const cambiarPlanEmpresa = async (req, res) => {
             include: { planes: true }
         });
 
+        if (!empresaActual) {
+            return res.status(404).json({ message: 'Empresa no encontrada.' });
+        }
+        if (!empresaActual.activo) {
+            return res.status(403).json({ message: 'Operación denegada. No es posible modificar el plan de una empresa que se encuentra suspendida.' });
+        }
+
         const nuevoPlanInfo = await prisma.planes.findUnique({ where: { id: parseInt(nuevo_plan_id) } });
 
         // Calculamos 30 días de vigencia para el nuevo plan de pago
@@ -254,6 +261,10 @@ const editarDatosEmpresa = async (req, res) => {
         });
         if (existeAlias) return res.status(400).json({ message: 'El alias ya está en uso por otra empresa.' });
 
+        const empresaActual = await prisma.empresas.findUnique({ where: { id: parseInt(id) } });
+        if (!empresaActual) return res.status(404).json({ message: 'Empresa no encontrada.' });
+        if (!empresaActual.activo) return res.status(403).json({ message: 'Operación denegada. No es posible modificar una empresa que se encuentra suspendida.' });
+
         await prisma.empresas.update({
             where: { id: parseInt(id) },
             data: { nombre: nombre_empresa, alias: alias }
@@ -272,6 +283,10 @@ const editarAdminEmpresa = async (req, res) => {
         const { admin_id, nombre_admin, email_admin, reset_password } = req.body;
 
         if (!admin_id) return res.status(400).json({ message: 'ID de administrador no proporcionado.' });
+
+        const empresaActual = await prisma.empresas.findUnique({ where: { id: parseInt(id) } });
+        if (!empresaActual) return res.status(404).json({ message: 'Empresa no encontrada.' });
+        if (!empresaActual.activo) return res.status(403).json({ message: 'Operación denegada. No es posible modificar una empresa que se encuentra suspendida.' });
 
         const adminData = { nombre: nombre_admin, email: email_admin };
 
