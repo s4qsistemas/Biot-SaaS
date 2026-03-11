@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import PricingCards from '../components/PricingCards';
 
 export default function Home() {
     return (
@@ -51,6 +52,25 @@ export default function Home() {
                     <Link to="/login" className="px-8 py-3.5 bg-dark-surface border border-dark-border text-txt-primary font-bold rounded-lg hover:border-brand hover:bg-dark-bg transition-colors flex items-center justify-center">
                         Ya tengo cuenta
                     </Link>
+                </div>
+            </section>
+
+            {/* SECCIÓN DE PRECIOS */}
+            <section id="planes" className="py-24 bg-dark-bg border-t border-dark-border">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center mb-16">
+                        <h2 className="text-base text-brand font-semibold tracking-wide uppercase">Precios</h2>
+                        <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-white sm:text-4xl">
+                            Planes diseñados para tu maestranza
+                        </p>
+                        <p className="mt-4 max-w-2xl text-xl text-txt-secondary mx-auto">
+                            Comienza gratis hoy mismo. Sin tarjetas de crédito, sin compromisos ocultos.
+                        </p>
+                    </div>
+
+                    {/* Aquí inyectamos el componente en Modo Público */}
+                    <PricingCards modo="public" />
+
                 </div>
             </section>
 

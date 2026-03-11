@@ -47,6 +47,8 @@ const crearMaestranza = async (req, res) => {
             fechaVencimiento.setDate(fechaVencimiento.getDate() + 30);
         }
 
+        const planInfo = await prisma.planes.findUnique({ where: { id: parseInt(plan_id) } });
+
         // Transacción...
         const nuevaMaestranza = await prisma.$transaction(async (tx) => {
             const empresa = await tx.empresas.create({
@@ -69,6 +71,18 @@ const crearMaestranza = async (req, res) => {
                     rol: 'admin',
                     activo: true,
                     debe_cambiar_password: debeCambiar
+                }
+            });
+
+            // 👇 NUEVO: Registro del Big Bang (Nacimiento de la empresa)
+            await tx.auditoria_empresas.create({
+                data: {
+                    empresa_id: empresa.id,
+                    tipo_evento: 'CAMBIO_PLAN',
+                    valor_anterior: 'Nueva Maestranza',
+                    valor_nuevo: planInfo.nombre,
+                    justificacion: 'Asignación de plan inicial durante la creación de la cuenta.',
+                    modificado_por_id: req.user.id // El SuperAdmin que está creando la cuenta
                 }
             });
 

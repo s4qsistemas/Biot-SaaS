@@ -10,22 +10,28 @@ export default function DashboardLayout() {
     navigate('/login');
   };
 
-  // ⏱️ LÓGICA DE TRIAL: Calcular días restantes
+  // ⏱️ LÓGICA DE TRIAL Y VENCIMIENTO
   const calcularDiasRestantes = () => {
-    // Si no tiene fecha de vencimiento (es SuperAdmin o tiene plan de pago ilimitado), retorna null
     if (!user?.fecha_vencimiento) return null;
-
     const hoy = new Date();
     const vencimiento = new Date(user.fecha_vencimiento);
     const diferenciaMs = vencimiento - hoy;
-    const dias = Math.ceil(diferenciaMs / (1000 * 60 * 60 * 24));
-
-    return dias;
+    return Math.ceil(diferenciaMs / (1000 * 60 * 60 * 24));
   };
 
   const diasRestantes = calcularDiasRestantes();
-  // Mostrar solo si no es SuperAdmin, tiene fecha de caducidad, y aún le quedan días (si es <= 0 lo atrapará el Paywall)
-  const mostrarBanner = user?.rol !== 'super_admin' && diasRestantes !== null && diasRestantes > 0;
+  const isAdmin = user?.rol === 'admin';
+  const isTrial = user?.empresa?.plan?.toLowerCase().includes('trial');
+
+  // 🛡️ REGLAS DE VISUALIZACIÓN DEL BANNER
+  // Solo se muestra si no es super_admin, le quedan días (si es <=0 lo agarra el Paywall),
+  // y: (Es Trial) O (Cualquier plan al que le queden 5 días o menos).
+  const mostrarBanner = user?.rol !== 'super_admin' &&
+    diasRestantes !== null &&
+    diasRestantes > 0 &&
+    (isTrial || diasRestantes <= 5);
+
+  const esUrgente = diasRestantes <= 5;
 
   return (
     <div className="min-h-screen bg-dark-bg flex flex-col font-sans">
@@ -46,11 +52,11 @@ export default function DashboardLayout() {
             {/* Derecha: Perfil / Acciones */}
             <div className="flex items-center gap-4">
               <div className="text-sm text-right hidden sm:block">
-                <p className="text-txt-primary font-medium leading-none">{user?.nombre || 'Administrador'}</p>
+                <p className="text-txt-primary font-medium leading-none">{user?.nombre || 'Usuario'}</p>
                 <p className="text-txt-secondary text-xs mt-1 capitalize">{user?.rol?.replace('_', ' ') || ''}</p>
               </div>
 
-              <div className="h-8 w-px bg-dark-border mx-1"></div> {/* Separador vertical */}
+              <div className="h-8 w-px bg-dark-border mx-1"></div>
 
               <button
                 onClick={handleLogout}
@@ -67,22 +73,35 @@ export default function DashboardLayout() {
         </div>
       </nav>
 
-      {/* 🚀 BANNER INTELIGENTE DE PRUEBA (TRIAL) */}
+      {/* 🚀 BANNER INTELIGENTE DE SUSCRIPCIÓN */}
       {mostrarBanner && (
-        <div className={`w-full px-4 py-2.5 text-center text-sm font-medium transition-colors ${diasRestantes <= 5
-            ? 'bg-red-900/30 border-b border-red-500/30 text-red-400' // Urgente (5 días o menos)
-            : 'bg-brand/10 border-b border-brand/20 text-brand'       // Discreto (6 a 14 días)
+        <div className={`w-full px-4 py-2.5 text-center text-sm font-medium transition-colors ${esUrgente
+            ? 'bg-red-900/30 border-b border-red-500/30 text-red-400'
+            : 'bg-brand/10 border-b border-brand/20 text-brand'
           }`}>
-          {diasRestantes <= 5 && <span className="mr-2">⚠️</span>}
-          Tu período de prueba finaliza en <strong>{diasRestantes} {diasRestantes === 1 ? 'día' : 'días'}</strong>.
-          <button className="ml-3 font-bold underline hover:text-white transition-colors">
-            Mejorar Plan ahora
-          </button>
+
+          {esUrgente && <span className="mr-2">⚠️</span>}
+
+          {isTrial ? (
+            <span>Tu período de prueba finaliza en <strong>{diasRestantes} {diasRestantes === 1 ? 'día' : 'días'}</strong>.</span>
+          ) : (
+            <span>Tu suscripción actual ({user?.empresa?.plan}) caduca en <strong>{diasRestantes} {diasRestantes === 1 ? 'día' : 'días'}</strong>.</span>
+          )}
+
+          {/* 👑 BOTÓN EXCLUSIVO PARA ADMINISTRADORES */}
+          {isAdmin && (
+            <button
+              onClick={() => navigate('/dashboard/planes')}
+              className={`ml-3 font-bold underline transition-colors ${esUrgente ? 'hover:text-red-200' : 'hover:text-white'}`}
+            >
+              {isTrial ? 'Mejorar Plan ahora' : 'Renovar ahora'}
+            </button>
+          )}
         </div>
       )}
 
       {/* Contenido Principal */}
-      <main className="flex-grow flex flex-col">
+      <main className="flex-grow flex flex-col relative">
         <Outlet />
       </main>
 

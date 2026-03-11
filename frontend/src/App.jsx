@@ -12,13 +12,13 @@ import Register from './pages/Register';
 import Contacto from './pages/Contacto';
 import AdminDashboard from './pages/AdminDashboard';
 import CambiarClave from './pages/CambiarClave';
+import Paywall from './pages/Paywall';
+import PortalPlanes from './pages/PortalPlanes';
 
 // 🛡️ GUARDIA DE SEGURIDAD PARA RUTAS PRIVADAS
 const PrivateRoute = () => {
   const { user, loading } = useAuth();
   const location = useLocation();
-
-  const isCambiarClavePath = location.pathname === '/cambiar-clave';
 
   if (loading) {
     return (
@@ -32,14 +32,39 @@ const PrivateRoute = () => {
     return <Navigate to="/login" replace />;
   }
 
-  // 🛑 SI ESTÁ EN LA JAULA Y QUIERE IR AL DASHBOARD
+  // 1. LÓGICA DE DÍAS RESTANTES (PAYWALL)
+  const calcularDiasRestantes = (fecha) => {
+    if (!fecha) return null;
+    const hoy = new Date();
+    const vencimiento = new Date(fecha);
+    const diferenciaMs = vencimiento - hoy;
+    return Math.ceil(diferenciaMs / (1000 * 60 * 60 * 24));
+  };
+
+  const diasRestantes = calcularDiasRestantes(user.fecha_vencimiento);
+  // ¿Es cliente, tiene fecha y se le acabó el tiempo (0 o negativo)?
+  const estaExpirado = user.rol !== 'super_admin' && diasRestantes !== null && diasRestantes <= 0;
+
+  // 2. RUTAS ACTUALES
+  const isCambiarClavePath = location.pathname === '/cambiar-clave';
+  const isPaywallPath = location.pathname === '/paywall';
+
+  // 🛑 TRAMPA 1: JAULA DE CLAVE (Prioridad Máxima)
   if (user.debe_cambiar_password && !isCambiarClavePath) {
     return <Navigate to="/cambiar-clave" replace />;
   }
-
-  // 🔓 SI YA NO ESTÁ EN LA JAULA Y QUIERE VOLVER A CAMBIAR CLAVE
   if (!user.debe_cambiar_password && isCambiarClavePath) {
     return <Navigate to="/dashboard" replace />;
+  }
+
+  // 🛑 TRAMPA 2: MURO DE PAGO (Si ya cambió la clave, evaluamos si expiró)
+  if (!user.debe_cambiar_password) {
+    if (estaExpirado && !isPaywallPath) {
+      return <Navigate to="/paywall" replace />; // 👈 Secuestro automático
+    }
+    if (!estaExpirado && isPaywallPath) {
+      return <Navigate to="/dashboard" replace />; // 👈 Si pagó, lo sacamos del muro
+    }
   }
 
   return <Outlet />;
@@ -60,8 +85,11 @@ function App() {
           {/* 🔐 RUTAS PRIVADAS (Blindadas por PrivateRoute) */}
           <Route element={<PrivateRoute />}>
 
-            {/* 🛑 JAULA: Cambio de Clave Obligatorio (Sin el Layout del Dashboard) */}
+            {/* 🛑 JAULA 1: Cambio de Clave Obligatorio */}
             <Route path="/cambiar-clave" element={<CambiarClave />} />
+
+            {/* 🛑 JAULA 2: Muro de Pago / Facturación */}
+            <Route path="/paywall" element={<Paywall />} />
 
             <Route element={<DashboardLayout />}>
 
@@ -73,7 +101,10 @@ function App() {
               {/* Dashboard general de las Maestranzas */}
               <Route path="/dashboard" element={<AdminDashboard />} />
 
-              {/* Redirección salvavidas: Si inventan una URL, van al dashboard */}
+              {/* 💸 NUEVA RUTA: Portal Interno de Planes */}
+              <Route path="/dashboard/planes" element={<PortalPlanes />} />
+
+              {/* Redirección salvavidas */}
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
 
             </Route>

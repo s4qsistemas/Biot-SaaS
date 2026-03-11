@@ -44,7 +44,7 @@ const registrarEmpresa = async (req, res) => {
                 }
             });
 
-            await tx.usuarios.create({
+            const admin = await tx.usuarios.create({
                 data: {
                     tenant_id: empresa.id,
                     nombre: nombre_admin,
@@ -53,6 +53,18 @@ const registrarEmpresa = async (req, res) => {
                     rol: 'admin',
                     activo: true,
                     debe_cambiar_password: false // Como la creó él mismo, no necesita cambiarla
+                }
+            });
+
+            // Registro inicial de plan (Big Bang)
+            await tx.auditoria_empresas.create({
+                data: {
+                    empresa_id: empresa.id,
+                    tipo_evento: 'CAMBIO_PLAN',
+                    valor_anterior: 'Nueva Maestranza',
+                    valor_nuevo: 'Plan Trial (14 días)',
+                    justificacion: 'Activación del periodo de prueba gratuito.',
+                    modificado_por_id: admin.id // Se asume que el mismo admin inicial dispara este evento
                 }
             });
         });
@@ -92,4 +104,18 @@ const procesarContacto = async (req, res) => {
     }
 };
 
-module.exports = { registrarEmpresa, procesarContacto };
+const obtenerPlanesPublicos = async (req, res) => {
+    try {
+        // 🛡️ Solo traemos los planes activos, ordenados por precio
+        const planes = await prisma.planes.findMany({
+            where: { activo: true },
+            orderBy: { precio_mensual: 'asc' }
+        });
+        res.json(planes);
+    } catch (error) {
+        console.error('Error al obtener planes públicos:', error);
+        res.status(500).json({ message: 'Error al cargar los planes comerciales.' });
+    }
+};
+
+module.exports = { registrarEmpresa, procesarContacto, obtenerPlanesPublicos };

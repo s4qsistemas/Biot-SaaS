@@ -43,6 +43,18 @@ const registrarEmpresaYAdmin = async (req, res) => {
                 }
             });
 
+            // C. Registro en auditoría del Big Bang
+            await tx.auditoria_empresas.create({
+                data: {
+                    empresa_id: nuevaEmpresa.id,
+                    tipo_evento: 'CAMBIO_PLAN',
+                    valor_anterior: 'Nueva Maestranza',
+                    valor_nuevo: 'Asignación Inicial (Manual)',
+                    justificacion: 'Nacimiento de la empresa y asignación del plan por SuperAdmin.',
+                    modificado_por_id: req.user?.id || nuevoAdmin.id // Evitamos fallo si no hay auth user al correrlo script
+                }
+            });
+
             return { empresa: nuevaEmpresa, admin: { email: nuevoAdmin.email, id: nuevoAdmin.id } };
         });
 
