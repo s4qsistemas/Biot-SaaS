@@ -10,13 +10,23 @@ export default function DashboardLayout() {
     navigate('/login');
   };
 
-  // ⏱️ LÓGICA DE TRIAL Y VENCIMIENTO
-  const calcularDiasRestantes = () => {
-    if (!user?.fecha_vencimiento) return null;
+  // ⏱️ LÓGICA DE DÍAS (Calendario Estricto / Regla de la Medianoche)
+  const calcularDiasRestantes = (fecha) => {
+    if (!fecha) return null;
+
+    // 1. Tomamos la fecha de hoy y le podamos las horas (00:00:00)
     const hoy = new Date();
-    const vencimiento = new Date(user.fecha_vencimiento);
+    hoy.setHours(0, 0, 0, 0);
+
+    // 2. Tomamos la fecha de vencimiento y le podamos las horas (00:00:00)
+    const vencimiento = new Date(fecha);
+    vencimiento.setHours(0, 0, 0, 0);
+
+    // 3. Diferencia exacta en milisegundos
     const diferenciaMs = vencimiento - hoy;
-    return Math.ceil(diferenciaMs / (1000 * 60 * 60 * 24));
+
+    // 4. Calculamos días limpios
+    return Math.round(diferenciaMs / (1000 * 60 * 60 * 24));
   };
 
   const diasRestantes = calcularDiasRestantes();
@@ -76,8 +86,8 @@ export default function DashboardLayout() {
       {/* 🚀 BANNER INTELIGENTE DE SUSCRIPCIÓN */}
       {mostrarBanner && (
         <div className={`w-full px-4 py-2.5 text-center text-sm font-medium transition-colors ${esUrgente
-            ? 'bg-red-900/30 border-b border-red-500/30 text-red-400'
-            : 'bg-brand/10 border-b border-brand/20 text-brand'
+          ? 'bg-red-900/30 border-b border-red-500/30 text-red-400'
+          : 'bg-brand/10 border-b border-brand/20 text-brand'
           }`}>
 
           {esUrgente && <span className="mr-2">⚠️</span>}

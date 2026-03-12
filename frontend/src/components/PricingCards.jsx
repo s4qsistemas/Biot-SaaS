@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import api from '../utils/api';
+import { useNavigate } from 'react-router-dom';
 
 export default function PricingCards({ modo = 'public', onSelectPlan }) {
     const [planes, setPlanes] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    const navigate = useNavigate();
 
     useEffect(() => {
         const cargarPlanes = async () => {
@@ -39,8 +42,8 @@ export default function PricingCards({ modo = 'public', onSelectPlan }) {
                     <div
                         key={plan.id}
                         className={`relative flex flex-col p-8 rounded-2xl border ${esPro
-                                ? 'bg-dark-surface border-brand shadow-[0_0_30px_rgba(0,212,255,0.15)] transform md:-translate-y-4'
-                                : 'bg-dark-bg border-dark-border hover:border-dark-border/80'
+                            ? 'bg-dark-surface border-brand shadow-[0_0_30px_rgba(0,212,255,0.15)] transform md:-translate-y-4'
+                            : 'bg-dark-bg border-dark-border hover:border-dark-border/80'
                             } transition-all duration-300`}
                     >
                         {esPro && (
@@ -77,10 +80,16 @@ export default function PricingCards({ modo = 'public', onSelectPlan }) {
                         </ul>
 
                         <button
-                            onClick={() => onSelectPlan && onSelectPlan(plan)}
+                            onClick={() => {
+                                if (modo === 'internal') {
+                                    onSelectPlan && onSelectPlan(plan);
+                                } else {
+                                    navigate('/register');
+                                }
+                            }}
                             className={`w-full py-3 px-4 rounded-lg font-bold text-sm transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-bg ${esPro
-                                    ? 'bg-brand text-dark-bg hover:bg-brand-light focus:ring-brand'
-                                    : 'bg-dark-surface border border-dark-border text-white hover:bg-dark-border focus:ring-dark-border'
+                                ? 'bg-brand text-dark-bg hover:bg-brand-light focus:ring-brand'
+                                : 'bg-dark-surface border border-dark-border text-white hover:bg-dark-border focus:ring-dark-border'
                                 }`}
                         >
                             {modo === 'internal' ? 'Seleccionar este Plan' : 'Comenzar Prueba'}

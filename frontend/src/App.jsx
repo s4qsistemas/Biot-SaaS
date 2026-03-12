@@ -33,12 +33,23 @@ const PrivateRoute = () => {
   }
 
   // 1. LÓGICA DE DÍAS RESTANTES (PAYWALL)
+  // ⏱️ LÓGICA DE DÍAS (Calendario Estricto / Regla de la Medianoche)
   const calcularDiasRestantes = (fecha) => {
     if (!fecha) return null;
+
+    // 1. Tomamos la fecha de hoy y le podamos las horas (00:00:00)
     const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    // 2. Tomamos la fecha de vencimiento y le podamos las horas (00:00:00)
     const vencimiento = new Date(fecha);
+    vencimiento.setHours(0, 0, 0, 0);
+
+    // 3. Diferencia exacta en milisegundos
     const diferenciaMs = vencimiento - hoy;
-    return Math.ceil(diferenciaMs / (1000 * 60 * 60 * 24));
+
+    // 4. Calculamos días limpios
+    return Math.round(diferenciaMs / (1000 * 60 * 60 * 24));
   };
 
   const diasRestantes = calcularDiasRestantes(user.fecha_vencimiento);
