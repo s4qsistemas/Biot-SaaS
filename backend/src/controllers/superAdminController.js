@@ -21,14 +21,14 @@ const crearMaestranza = async (req, res) => {
         const rutFormateado = formatRutForDB(rut_empresa);
 
         // 🛡️ 3. REVISAR DUPLICIDAD DE RUT EN LA BASE DE DATOS
-        const existeRut = await prisma.empresas.findUnique({ where: { rut: rutFormateado } });
+        const existeRut = await prisma.empresa.findUnique({ where: { rut: rutFormateado } });
         if (existeRut) return res.status(400).json({ message: 'Este RUT ya está registrado como empresa en la plataforma.' });
 
         // Revisar Alias y Correo...
-        const existeAlias = await prisma.empresas.findUnique({ where: { alias } });
+        const existeAlias = await prisma.empresa.findUnique({ where: { alias } });
         if (existeAlias) return res.status(400).json({ message: 'El alias ya está en uso.' });
 
-        const existeEmail = await prisma.usuarios.findUnique({ where: { email: email_admin } });
+        const existeEmail = await prisma.usuario.findUnique({ where: { email: email_admin } });
         if (existeEmail) return res.status(400).json({ message: 'Correo ya registrado.' });
 
         // 👇 GENERACIÓN AUTOMÁTICA DE CLAVE
@@ -47,22 +47,22 @@ const crearMaestranza = async (req, res) => {
             fechaVencimiento.setDate(fechaVencimiento.getDate() + 30);
         }
 
-        const planInfo = await prisma.planes.findUnique({ where: { id: parseInt(plan_id) } });
+        const planInfo = await prisma.plan.findUnique({ where: { id: parseInt(plan_id) } });
 
         // Transacción...
         const nuevaMaestranza = await prisma.$transaction(async (tx) => {
-            const empresa = await tx.empresas.create({
+            const empresa = await tx.empresa.create({
                 data: {
                     nombre: nombre_empresa,
                     rut: rutFormateado,
                     alias: alias,
                     activo: true,
                     plan_id: parseInt(plan_id),
-                    fecha_vencimiento: fechaVencimiento // 👈 AHORA SÍ SE GUARDA LA FECHA
+                    fecha_vencimiento: fechaVencimiento
                 }
             });
 
-            const admin = await tx.usuarios.create({
+            const admin = await tx.usuario.create({
                 data: {
                     tenant_id: empresa.id,
                     nombre: nombre_admin,
@@ -75,7 +75,7 @@ const crearMaestranza = async (req, res) => {
             });
 
             // 👇 NUEVO: Registro del Big Bang (Nacimiento de la empresa)
-            await tx.auditoria_empresas.create({
+            await tx.auditoriaEmpresa.create({
                 data: {
                     empresa_id: empresa.id,
                     tipo_evento: 'CAMBIO_PLAN',
@@ -99,11 +99,11 @@ const crearMaestranza = async (req, res) => {
 
 const obtenerMaestranzas = async (req, res) => {
     try {
-        const empresas = await prisma.empresas.findMany({
+        const empresas = await prisma.empresa.findMany({
             where: { rut: { not: '99999999-9' } },
             include: {
-                usuarios: { where: { rol: { in: ['admin', 'super_admin'] } }, take: 1 },
-                planes: true
+                usuarios: { where: { rol: { in: ['admin', 'super_admin'] } }, take: 1 }, // 👈 CORRECCIÓN A PLURAL
+                plan: true
             },
             orderBy: { created_at: 'desc' }
         });
@@ -125,16 +125,17 @@ const obtenerMaestranzas = async (req, res) => {
                 alias: emp.alias,
                 estado: emp.activo ? 'activa' : 'suspendida',
                 plan_id: emp.plan_id || '',
-                plan_nombre: emp.planes?.nombre || 'Sin Plan',
+                plan_nombre: emp.plan?.nombre || 'Sin Plan',
                 fecha_vencimiento: emp.fecha_vencimiento,
-                dias_restantes: dias_restantes, // 👈 Se envía a React
-                admin_id: emp.usuarios[0]?.id || null,
-                admin_nombre: emp.usuarios[0]?.nombre || '',
-                admin_email: emp.usuarios[0]?.email || ''
+                dias_restantes: dias_restantes,
+                admin_id: emp.usuarios[0]?.id || null, // 👈 CORRECCIÓN A PLURAL
+                admin_nombre: emp.usuarios[0]?.nombre || '', // 👈 CORRECCIÓN A PLURAL
+                admin_email: emp.usuarios[0]?.email || '' // 👈 CORRECCIÓN A PLURAL
             };
         });
         res.json(data);
     } catch (error) {
+        console.error('🔥 Error crítico en obtenerMaestranzas:', error); // 👈 OBSERVABILIDAD AÑADIDA
         res.status(500).json({ message: 'Error al obtener empresas' });
     }
 };
@@ -145,7 +146,7 @@ const obtenerMaestranzas = async (req, res) => {
 
 const obtenerPlanes = async (req, res) => {
     try {
-        const planes = await prisma.planes.findMany({
+        const planes = await prisma.plan.findMany({
             orderBy: { precio_mensual: 'asc' }
         });
         res.json(planes);
@@ -162,7 +163,7 @@ const crearPlan = async (req, res) => {
             return res.status(400).json({ message: 'Faltan campos obligatorios' });
         }
 
-        const nuevoPlan = await prisma.planes.create({
+        const nuevoPlan = await prisma.plan.create({
             data: {
                 nombre,
                 limite_usuarios: parseInt(limite_usuarios),
@@ -182,7 +183,7 @@ const editarPlan = async (req, res) => {
         const { id } = req.params;
         const { nombre, limite_usuarios, precio_mensual, activo } = req.body;
 
-        const planActualizado = await prisma.planes.update({
+        const planActualizado = await prisma.plan.update({
             where: { id: parseInt(id) },
             data: {
                 nombre,
@@ -213,9 +214,9 @@ const cambiarPlanEmpresa = async (req, res) => {
             return res.status(403).json({ message: 'Operación denegada. No está permitido asignar el Plan Trial a una empresa existente.' });
         }
 
-        const empresaActual = await prisma.empresas.findUnique({
+        const empresaActual = await prisma.empresa.findUnique({
             where: { id: parseInt(id) },
-            include: { planes: true }
+            include: { plan: true }
         });
 
         if (!empresaActual) {
@@ -225,15 +226,15 @@ const cambiarPlanEmpresa = async (req, res) => {
             return res.status(403).json({ message: 'Operación denegada. No es posible modificar el plan de una empresa que se encuentra suspendida.' });
         }
 
-        const nuevoPlanInfo = await prisma.planes.findUnique({ where: { id: parseInt(nuevo_plan_id) } });
+        const nuevoPlanInfo = await prisma.plan.findUnique({ where: { id: parseInt(nuevo_plan_id) } });
 
         // Calculamos 30 días de vigencia para el nuevo plan de pago
         const nuevaFechaVencimiento = new Date();
         nuevaFechaVencimiento.setDate(nuevaFechaVencimiento.getDate() + 30);
 
         await prisma.$transaction(async (tx) => {
-            // 1. Cambiamos el plan (y limpiamos fecha_vencimiento asumiendo suscripción indefinida, o le sumas 30 días si es prepago)
-            await tx.empresas.update({
+            // 1. Cambiamos el plan
+            await tx.empresa.update({
                 where: { id: parseInt(id) },
                 data: {
                     plan_id: parseInt(nuevo_plan_id),
@@ -242,11 +243,11 @@ const cambiarPlanEmpresa = async (req, res) => {
             });
 
             // 2. Dejamos el registro inmutable en Auditoría
-            await tx.auditoria_empresas.create({
+            await tx.auditoriaEmpresa.create({
                 data: {
                     empresa_id: parseInt(id),
                     tipo_evento: 'CAMBIO_PLAN',
-                    valor_anterior: empresaActual.planes?.nombre || 'Sin Plan',
+                    valor_anterior: empresaActual.plan?.nombre || 'Sin Plan',
                     valor_nuevo: nuevoPlanInfo.nombre,
                     justificacion: justificacion,
                     modificado_por_id: adminId
@@ -270,16 +271,16 @@ const editarDatosEmpresa = async (req, res) => {
         const { id } = req.params;
         const { nombre_empresa, alias } = req.body;
 
-        const existeAlias = await prisma.empresas.findFirst({
+        const existeAlias = await prisma.empresa.findFirst({
             where: { alias, NOT: { id: parseInt(id) } }
         });
         if (existeAlias) return res.status(400).json({ message: 'El alias ya está en uso por otra empresa.' });
 
-        const empresaActual = await prisma.empresas.findUnique({ where: { id: parseInt(id) } });
+        const empresaActual = await prisma.empresa.findUnique({ where: { id: parseInt(id) } });
         if (!empresaActual) return res.status(404).json({ message: 'Empresa no encontrada.' });
         if (!empresaActual.activo) return res.status(403).json({ message: 'Operación denegada. No es posible modificar una empresa que se encuentra suspendida.' });
 
-        await prisma.empresas.update({
+        await prisma.empresa.update({
             where: { id: parseInt(id) },
             data: { nombre: nombre_empresa, alias: alias }
         });
@@ -298,7 +299,7 @@ const editarAdminEmpresa = async (req, res) => {
 
         if (!admin_id) return res.status(400).json({ message: 'ID de administrador no proporcionado.' });
 
-        const empresaActual = await prisma.empresas.findUnique({ where: { id: parseInt(id) } });
+        const empresaActual = await prisma.empresa.findUnique({ where: { id: parseInt(id) } });
         if (!empresaActual) return res.status(404).json({ message: 'Empresa no encontrada.' });
         if (!empresaActual.activo) return res.status(403).json({ message: 'Operación denegada. No es posible modificar una empresa que se encuentra suspendida.' });
 
@@ -312,7 +313,7 @@ const editarAdminEmpresa = async (req, res) => {
             adminData.debe_cambiar_password = true;
         }
 
-        await prisma.usuarios.update({
+        await prisma.usuario.update({
             where: { id: parseInt(admin_id) },
             data: adminData
         });
@@ -334,7 +335,7 @@ const cambiarEstadoEmpresa = async (req, res) => {
             return res.status(400).json({ message: 'Debe ingresar una justificación válida (mín. 10 caracteres).' });
         }
 
-        const empresaActual = await prisma.empresas.findUnique({ where: { id: parseInt(id) } });
+        const empresaActual = await prisma.empresa.findUnique({ where: { id: parseInt(id) } });
         const nuevoEstado = activo === true || activo === 'true';
 
         if (empresaActual.activo === nuevoEstado) {
@@ -342,12 +343,12 @@ const cambiarEstadoEmpresa = async (req, res) => {
         }
 
         await prisma.$transaction(async (tx) => {
-            await tx.empresas.update({
+            await tx.empresa.update({
                 where: { id: parseInt(id) },
                 data: { activo: nuevoEstado }
             });
 
-            await tx.auditoria_empresas.create({
+            await tx.auditoriaEmpresa.create({
                 data: {
                     empresa_id: parseInt(id),
                     tipo_evento: 'CAMBIO_ESTADO',
@@ -369,10 +370,10 @@ const cambiarEstadoEmpresa = async (req, res) => {
 const obtenerHistorialEmpresa = async (req, res) => {
     try {
         const { id } = req.params;
-        const historial = await prisma.auditoria_empresas.findMany({
+        const historial = await prisma.auditoriaEmpresa.findMany({
             where: { empresa_id: parseInt(id) },
             include: {
-                usuarios: { select: { nombre: true, email: true } } // Traemos quién hizo el cambio
+                usuario: { select: { nombre: true, email: true } } // Traemos quién hizo el cambio
             },
             orderBy: { created_at: 'desc' }
         });

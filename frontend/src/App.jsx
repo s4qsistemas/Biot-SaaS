@@ -14,6 +14,11 @@ import AdminDashboard from './pages/AdminDashboard';
 import CambiarClave from './pages/CambiarClave';
 import Paywall from './pages/Paywall';
 import PortalPlanes from './pages/PortalPlanes';
+import Catalogos from './pages/Catalogos';
+import Entidades from './pages/Entidades';
+import Inventario from './pages/Inventario';
+import Cotizaciones from './pages/Cotizaciones';
+import OrdenesTrabajo from './pages/OrdenesTrabajo';
 
 // 🛡️ GUARDIA DE SEGURIDAD PARA RUTAS PRIVADAS
 const PrivateRoute = () => {
@@ -113,6 +118,13 @@ function App() {
 
               {/* 💸 NUEVA RUTA: Portal Interno de Planes */}
               <Route path="/dashboard/planes" element={<PortalPlanes />} />
+
+              {/* Nuevas Secciones Operativas */}
+              <Route path="/dashboard/catalogos" element={<Catalogos />} />
+              <Route path="/dashboard/entidades" element={<Entidades />} />
+              <Route path="/dashboard/inventario" element={<Inventario />} />
+              <Route path="/dashboard/cotizaciones" element={<Cotizaciones />} />
+              <Route path="/dashboard/ordenes-trabajo" element={<OrdenesTrabajo />} />
 
               {/* Redirección salvavidas */}
               <Route path="*" element={<Navigate to="/dashboard" replace />} />

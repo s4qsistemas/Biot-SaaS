@@ -1,12 +1,16 @@
 const express = require('express');
 const router = express.Router();
-// Asumiendo que importarás estos nuevos controladores
+const { authorize } = require('../middleware/authMiddleware');
+
 const {
     crearMaestranza, obtenerMaestranzas,
     editarDatosEmpresa, editarAdminEmpresa,
     cambiarEstadoEmpresa, cambiarPlanEmpresa, obtenerHistorialEmpresa,
     obtenerPlanes, crearPlan, editarPlan
 } = require('../controllers/superAdminController');
+
+// 🔒 CANDADO ABSOLUTO: Todas las rutas de este archivo exigen ser super_admin
+router.use(authorize(['super_admin']));
 
 // 🏢 RUTAS DE EMPRESAS (Atómicas)
 router.post('/empresa', crearMaestranza);

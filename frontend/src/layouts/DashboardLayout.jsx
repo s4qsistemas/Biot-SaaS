@@ -1,9 +1,15 @@
-import { Outlet, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import Sidebar from '../components/Sidebar'; // Asegúrate de tener este componente
 
 export default function DashboardLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation(); // 👈 El espía de la URL
+
+  // Estado para la sidebar
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -13,18 +19,10 @@ export default function DashboardLayout() {
   // ⏱️ LÓGICA DE DÍAS (Calendario Estricto / Regla de las 23:59:59)
   const calcularDiasRestantes = (fecha) => {
     if (!fecha) return null;
-
-    // 1. Tomamos la fecha de hoy exacta
     const hoy = new Date();
-
-    // 2. Tomamos la fecha de vencimiento y forzamos la hora al último milisegundo del día
     const vencimiento = new Date(fecha);
     vencimiento.setHours(23, 59, 59, 999);
-
-    // 3. Diferencia exacta en milisegundos
     const diferenciaMs = vencimiento.getTime() - hoy.getTime();
-
-    // 4. Calculamos días limpios usando Math.ceil para incluir la fracción del día actual
     return Math.ceil(diferenciaMs / (1000 * 60 * 60 * 24));
   };
 
@@ -33,8 +31,6 @@ export default function DashboardLayout() {
   const isTrial = user?.empresa?.plan?.toLowerCase().includes('trial');
 
   // 🛡️ REGLAS DE VISUALIZACIÓN DEL BANNER
-  // Solo se muestra si no es super_admin, le quedan días (si es <=0 lo agarra el Paywall),
-  // y: (Es Trial) O (Cualquier plan al que le queden 5 días o menos).
   const mostrarBanner = user?.rol !== 'super_admin' &&
     diasRestantes !== null &&
     diasRestantes > 0 &&
@@ -42,12 +38,15 @@ export default function DashboardLayout() {
 
   const esUrgente = diasRestantes <= 5;
 
+  // 🛡️ REGLA DE NAVEGACIÓN: Si estamos en el home del dashboard, ocultamos la sidebar
+  const isMainDashboard = location.pathname === '/dashboard' || location.pathname === '/dashboard/';
+
   return (
     <div className="min-h-screen bg-dark-bg flex flex-col font-sans">
 
       {/* Top Navbar */}
       <nav className="bg-dark-surface border-b border-dark-border sticky top-0 z-40 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
           <div className="flex justify-between h-16 items-center">
 
             {/* Izquierda: Logo / Título */}
@@ -97,7 +96,6 @@ export default function DashboardLayout() {
             <span>Tu suscripción actual ({user?.empresa?.plan}) caduca en <strong>{diasRestantes} {diasRestantes === 1 ? 'día' : 'días'}</strong>.</span>
           )}
 
-          {/* 👑 BOTÓN EXCLUSIVO PARA ADMINISTRADORES */}
           {isAdmin && (
             <button
               onClick={() => navigate('/dashboard/planes')}
@@ -109,11 +107,20 @@ export default function DashboardLayout() {
         </div>
       )}
 
-      {/* Contenido Principal */}
-      <main className="flex-grow flex flex-col relative">
-        <Outlet />
-      </main>
+      {/* 🚀 ESTRUCTURA DIVIDIDA: Contenedor Flex para Sidebar y Contenido */}
+      <div className="flex flex-1 overflow-hidden relative">
 
+        {/* Renderizado Condicional de la Sidebar */}
+        {!isMainDashboard && (
+          <Sidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
+        )}
+
+        {/* Contenido Principal */}
+        <main className="flex-1 overflow-y-auto custom-scrollbar bg-dark-bg">
+          <Outlet />
+        </main>
+
+      </div>
     </div>
   );
 }

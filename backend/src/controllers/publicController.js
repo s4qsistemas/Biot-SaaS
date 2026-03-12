@@ -16,13 +16,13 @@ const registrarEmpresa = async (req, res) => {
         if (!validateRut(rut_empresa)) return res.status(400).json({ message: 'RUT inválido.' });
         const rutFormateado = formatRutForDB(rut_empresa);
 
-        const existeRut = await prisma.empresas.findUnique({ where: { rut: rutFormateado } });
+        const existeRut = await prisma.empresa.findUnique({ where: { rut: rutFormateado } });
         if (existeRut) return res.status(400).json({ message: 'Esta empresa ya está registrada.' });
 
-        const existeAlias = await prisma.empresas.findUnique({ where: { alias } });
+        const existeAlias = await prisma.empresa.findUnique({ where: { alias } });
         if (existeAlias) return res.status(400).json({ message: 'El alias no está disponible.' });
 
-        const existeEmail = await prisma.usuarios.findUnique({ where: { email: email_admin } });
+        const existeEmail = await prisma.usuario.findUnique({ where: { email: email_admin } });
         if (existeEmail) return res.status(400).json({ message: 'El correo ya está registrado.' });
 
         const salt = await bcrypt.genSalt(10);
@@ -33,7 +33,7 @@ const registrarEmpresa = async (req, res) => {
         fechaVencimiento.setDate(fechaVencimiento.getDate() + 14);
 
         await prisma.$transaction(async (tx) => {
-            const empresa = await tx.empresas.create({
+            const empresa = await tx.empresa.create({
                 data: {
                     nombre: nombre_empresa,
                     rut: rutFormateado,
@@ -44,7 +44,7 @@ const registrarEmpresa = async (req, res) => {
                 }
             });
 
-            const admin = await tx.usuarios.create({
+            const admin = await tx.usuario.create({
                 data: {
                     tenant_id: empresa.id,
                     nombre: nombre_admin,
@@ -57,7 +57,7 @@ const registrarEmpresa = async (req, res) => {
             });
 
             // Registro inicial de plan (Big Bang)
-            await tx.auditoria_empresas.create({
+            await tx.auditoriaEmpresa.create({
                 data: {
                     empresa_id: empresa.id,
                     tipo_evento: 'CAMBIO_PLAN',
@@ -107,7 +107,7 @@ const procesarContacto = async (req, res) => {
 const obtenerPlanesPublicos = async (req, res) => {
     try {
         // 🛡️ Solo traemos los planes activos, ordenados por precio
-        const planes = await prisma.planes.findMany({
+        const planes = await prisma.plan.findMany({
             where: { activo: true },
             orderBy: { precio_mensual: 'asc' }
         });

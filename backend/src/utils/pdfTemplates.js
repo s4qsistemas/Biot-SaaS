@@ -68,11 +68,11 @@ const generarTemplateCotizacion = (cotizacion) => {
             <div class="info-grid">
                 <div class="info-column">
                     <div class="info-label">Cliente</div>
-                    <div class="info-value">${cotizacion.entidades?.nombre || cotizacion.cliente_nombre}</div>
+                    <div class="info-value">${cotizacion.entidad?.nombre || cotizacion.cliente_nombre}</div>
                     <div class="info-label">RUT</div>
-                    <div class="info-value">${cotizacion.entidades?.rut || '---'}</div>
+                    <div class="info-value">${cotizacion.entidad?.rut || '---'}</div>
                     <div class="info-label">Email</div>
-                    <div class="info-value">${cotizacion.entidades?.email || '---'}</div>
+                    <div class="info-value">${cotizacion.entidad?.email || '---'}</div>
                 </div>
                 <div class="info-column">
                     <div class="info-label">Fecha de Emisión</div>
@@ -143,18 +143,18 @@ const generarTemplateOT = (ot) => {
                 <td style="padding: 10px; border-bottom: 1px solid #eeeeee; color: #333333; font-size: 12px; font-weight: bold;">${tarea.nombre}</td>
                 <td style="padding: 10px; border-bottom: 1px solid #eeeeee; color: #555555; font-size: 12px;">${tarea.tipo || 'General'}</td>
                 <td style="padding: 10px; border-bottom: 1px solid #eeeeee; color: #555555; font-size: 12px; font-family: monospace;">
-                    ${tarea.operario_id ? (tarea.operarios?.nombre || 'Asignado') : 'Sin asignar'}
+                    ${tarea.operario_id ? (tarea.operario?.nombre || 'Asignado') : 'Sin asignar'}
                 </td>
             </tr>
         `).join('')
         : '<tr><td colspan="4" style="padding: 15px; text-align: center; color: #999;">No hay tareas detalladas en la ruta de fabricación.</td></tr>';
 
     // Generar las filas de los materiales (Alcance)
-    const filasMateriales = ot.cotizaciones?.detalle_cotizaciones?.length > 0
-        ? ot.cotizaciones.detalle_cotizaciones.map(item => `
+    const filasMateriales = ot.cotizacion?.detalle_cotizaciones?.length > 0
+        ? ot.cotizacion.detalle_cotizaciones.map(item => `
             <tr>
                 <td style="padding: 8px; border-bottom: 1px solid #eeeeee; color: #2563eb; font-size: 11px; font-family: monospace; font-weight: bold;">
-                    [${item.productos?.codigo || item.operarios?.codigo || item.equipos?.codigo || 'GENÉRICO'}]
+                    [${item.producto?.codigo || item.operario?.codigo || item.equipo?.codigo || 'GENÉRICO'}]
                 </td>
                 <td style="padding: 8px; border-bottom: 1px solid #eeeeee; color: #333333; font-size: 11px;">${item.descripcion}</td>
                 <td style="padding: 8px; border-bottom: 1px solid #eeeeee; text-align: center; color: #555555; font-size: 11px; font-weight: bold;">${Number(item.cantidad)}</td>
@@ -206,7 +206,7 @@ const generarTemplateOT = (ot) => {
                     <div class="info-label">Cliente / Proyecto</div>
                     <div class="info-value">${ot.cliente_nombre || 'Interno'}</div>
                     <div class="info-label">Cotización Origen</div>
-                    <div class="info-value">${ot.cotizaciones?.folio || 'OT Directa'}</div>
+                    <div class="info-value">${ot.cotizacion?.folio || 'OT Directa'}</div>
                 </div>
                 <div class="info-column">
                     <div class="info-label">Fecha Emisión OT</div>

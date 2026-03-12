@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 const checkPasswordChange = async (req, res, next) => {
     try {
         // Asume que authenticate ya corrió y req.user existe
-        const user = await prisma.usuarios.findUnique({
+        const user = await prisma.usuario.findUnique({
             where: { id: req.user.id },
             select: { debe_cambiar_password: true }
         });

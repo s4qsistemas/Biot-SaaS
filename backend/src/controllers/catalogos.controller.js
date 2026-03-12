@@ -2,13 +2,12 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 /* ==========================================
-   📦 MATERIALES (Tabla: productos)
+   📦 MATERIALES (Tabla: Producto)
 ========================================== */
 const getMateriales = async (req, res) => {
     try {
         const tenant_id = req.user.tenant_id;
-
-        const materiales = await prisma.productos.findMany({
+        const materiales = await prisma.producto.findMany({
             where: { tenant_id: tenant_id },
             orderBy: { nombre: 'asc' }
         });
@@ -22,14 +21,16 @@ const getMateriales = async (req, res) => {
 const createMaterial = async (req, res) => {
     try {
         const tenant_id = req.user.tenant_id;
-        
-        const data = { ...req.body, tenant_id: tenant_id }; 
-        
-        const nuevo = await prisma.productos.create({ data });
+        const { codigo, nombre, tipo_medicion, unidad_base, permite_retazo, precio_compra, precio_venta, stock_minimo } = req.body;
+
+        const nuevo = await prisma.producto.create({
+            data: { tenant_id, codigo, nombre, tipo_medicion, unidad_base, permite_retazo, precio_compra, precio_venta, stock_minimo }
+        });
         res.status(201).json(nuevo);
     } catch (error) {
+        if (error.code === 'P2002') return res.status(400).json({ message: 'El código de producto ya existe en su inventario.' });
         console.error("Error creando material:", error);
-        res.status(500).json({ message: 'Error al crear material', error: error.message });
+        res.status(500).json({ message: 'Error interno al crear material' });
     }
 };
 
@@ -37,56 +38,52 @@ const updateMaterial = async (req, res) => {
     try {
         const { id } = req.params;
         const tenant_id = req.user.tenant_id;
+        const { codigo, nombre, tipo_medicion, unidad_base, permite_retazo, precio_compra, precio_venta, stock_minimo, activo } = req.body;
 
-        // 1. Validar que el producto exista y pertenezca ESTRICTAMENTE a la empresa del usuario
-        const existe = await prisma.productos.findFirst({
+        const existe = await prisma.producto.findFirst({
             where: { id: parseInt(id), tenant_id: tenant_id }
         });
 
-        if (!existe) {
-            return res.status(404).json({ message: 'Material no encontrado o acceso denegado' });
-        }
+        if (!existe) return res.status(404).json({ message: 'Material no encontrado o acceso denegado' });
 
-        // 2. Limpiar el body para evitar que un hacker intente reasignar el producto a otra empresa
-        const dataToUpdate = { ...req.body };
-        delete dataToUpdate.tenant_id;
-        delete dataToUpdate.id;
-
-        // 3. Actualizar
-        const actualizado = await prisma.productos.update({
+        const actualizado = await prisma.producto.update({
             where: { id: parseInt(id) },
-            data: dataToUpdate
+            data: { codigo, nombre, tipo_medicion, unidad_base, permite_retazo, precio_compra, precio_venta, stock_minimo, activo }
         });
         res.json(actualizado);
     } catch (error) {
+        if (error.code === 'P2002') return res.status(400).json({ message: 'El código de producto ya existe.' });
         console.error("Error actualizando material:", error);
         res.status(500).json({ message: 'Error al actualizar material' });
     }
 };
 
 /* ==========================================
-   👷‍♂️ MANO DE OBRA / HH (Tabla: operarios)
+   👷‍♂️ MANO DE OBRA (Tabla: Operario)
 ========================================== */
 const getOperarios = async (req, res) => {
     try {
-        const operarios = await prisma.operarios.findMany({
+        const operarios = await prisma.operario.findMany({
             where: { tenant_id: req.user.tenant_id },
             orderBy: { nombre: 'asc' }
         });
         res.json(operarios);
     } catch (error) {
-        console.error("Error obteniendo operarios:", error);
         res.status(500).json({ message: 'Error al obtener operarios' });
     }
 };
 
 const createOperario = async (req, res) => {
     try {
-        const data = { ...req.body, tenant_id: req.user.tenant_id };
-        const nuevo = await prisma.operarios.create({ data });
+        const tenant_id = req.user.tenant_id;
+        const { codigo, nombre, especialidad, valor_hora, email, celular } = req.body;
+
+        const nuevo = await prisma.operario.create({
+            data: { tenant_id, codigo, nombre, especialidad, valor_hora, email, celular }
+        });
         res.status(201).json(nuevo);
     } catch (error) {
-        console.error("Error creando operario:", error);
+        if (error.code === 'P2002') return res.status(400).json({ message: 'El código de operario ya existe.' });
         res.status(500).json({ message: 'Error al crear operario' });
     }
 };
@@ -95,51 +92,48 @@ const updateOperario = async (req, res) => {
     try {
         const { id } = req.params;
         const tenant_id = req.user.tenant_id;
+        const { codigo, nombre, especialidad, valor_hora, email, celular, activo } = req.body;
 
-        const existe = await prisma.operarios.findFirst({
-            where: { id: parseInt(id), tenant_id: tenant_id }
-        });
-
+        const existe = await prisma.operario.findFirst({ where: { id: parseInt(id), tenant_id } });
         if (!existe) return res.status(404).json({ message: 'Operario no encontrado o acceso denegado' });
 
-        const dataToUpdate = { ...req.body };
-        delete dataToUpdate.tenant_id;
-        delete dataToUpdate.id;
-
-        const actualizado = await prisma.operarios.update({
+        const actualizado = await prisma.operario.update({
             where: { id: parseInt(id) },
-            data: dataToUpdate
+            data: { codigo, nombre, especialidad, valor_hora, email, celular, activo }
         });
         res.json(actualizado);
     } catch (error) {
-        console.error("Error actualizando operario:", error);
+        if (error.code === 'P2002') return res.status(400).json({ message: 'El código de operario ya existe.' });
         res.status(500).json({ message: 'Error al actualizar operario' });
     }
 };
 
 /* ==========================================
-   ⚙️ EQUIPOS / HM (Tabla: equipos)
+   ⚙️ EQUIPOS (Tabla: Equipo)
 ========================================== */
 const getEquipos = async (req, res) => {
     try {
-        const equipos = await prisma.equipos.findMany({
+        const equipos = await prisma.equipo.findMany({
             where: { tenant_id: req.user.tenant_id },
             orderBy: { nombre: 'asc' }
         });
         res.json(equipos);
     } catch (error) {
-        console.error("Error obteniendo equipos:", error);
         res.status(500).json({ message: 'Error al obtener equipos' });
     }
 };
 
 const createEquipo = async (req, res) => {
     try {
-        const data = { ...req.body, tenant_id: req.user.tenant_id };
-        const nuevo = await prisma.equipos.create({ data });
+        const tenant_id = req.user.tenant_id;
+        const { codigo, nombre, tipo, valor_hora, ubicacion } = req.body;
+
+        const nuevo = await prisma.equipo.create({
+            data: { tenant_id, codigo, nombre, tipo, valor_hora, ubicacion }
+        });
         res.status(201).json(nuevo);
     } catch (error) {
-        console.error("Error creando equipo:", error);
+        if (error.code === 'P2002') return res.status(400).json({ message: 'El código de equipo ya existe.' });
         res.status(500).json({ message: 'Error al crear equipo' });
     }
 };
@@ -148,60 +142,47 @@ const updateEquipo = async (req, res) => {
     try {
         const { id } = req.params;
         const tenant_id = req.user.tenant_id;
+        const { codigo, nombre, tipo, valor_hora, ubicacion, activo } = req.body;
 
-        const existe = await prisma.equipos.findFirst({
-            where: { id: parseInt(id), tenant_id: tenant_id }
-        });
+        const existe = await prisma.equipo.findFirst({ where: { id: parseInt(id), tenant_id } });
+        if (!existe) return res.status(404).json({ message: 'Equipo no encontrado' });
 
-        if (!existe) return res.status(404).json({ message: 'Equipo no encontrado o acceso denegado' });
-
-        const dataToUpdate = { ...req.body };
-        delete dataToUpdate.tenant_id;
-        delete dataToUpdate.id;
-
-        const actualizado = await prisma.equipos.update({
+        const actualizado = await prisma.equipo.update({
             where: { id: parseInt(id) },
-            data: dataToUpdate
+            data: { codigo, nombre, tipo, valor_hora, ubicacion, activo }
         });
         res.json(actualizado);
     } catch (error) {
-        console.error("Error actualizando equipo:", error);
+        if (error.code === 'P2002') return res.status(400).json({ message: 'El código de equipo ya existe.' });
         res.status(500).json({ message: 'Error al actualizar equipo' });
     }
 };
 
 /* ==========================================
-   📋 TIPOS DE TAREA (TAR)
+   📋 TIPOS DE TAREA (Tabla: CatalogoTarea)
 ========================================== */
 const getTareas = async (req, res) => {
     try {
-        const tareas = await prisma.catalogo_tareas.findMany({
+        const tareas = await prisma.catalogoTarea.findMany({
             where: { tenant_id: req.user.tenant_id },
             orderBy: { codigo: 'asc' }
         });
         res.json(tareas);
     } catch (error) {
-        console.error("Error obteniendo tareas maestras:", error);
-        res.status(500).json({ message: "Error interno del servidor" });
+        res.status(500).json({ message: "Error interno" });
     }
 };
 
 const createTarea = async (req, res) => {
     try {
-        const { codigo, nombre, descripcion, activo } = req.body;
-        const nuevaTarea = await prisma.catalogo_tareas.create({
-            data: { 
-                tenant_id: req.user.tenant_id, 
-                codigo, 
-                nombre, 
-                descripcion, 
-                activo 
-            }
+        const { codigo, nombre, descripcion } = req.body;
+        const nuevaTarea = await prisma.catalogoTarea.create({
+            data: { tenant_id: req.user.tenant_id, codigo, nombre, descripcion }
         });
         res.status(201).json(nuevaTarea);
     } catch (error) {
-        console.error("Error creando tarea maestra:", error);
-        res.status(500).json({ message: "Error al crear la tarea maestra" });
+        if (error.code === 'P2002') return res.status(400).json({ message: 'El código de tarea ya existe.' });
+        res.status(500).json({ message: "Error al crear tarea" });
     }
 };
 
@@ -209,28 +190,22 @@ const updateTarea = async (req, res) => {
     try {
         const { id } = req.params;
         const tenant_id = req.user.tenant_id;
-        const { nombre, descripcion, activo } = req.body;
+        const { codigo, nombre, descripcion, activo } = req.body;
 
-        const existe = await prisma.catalogo_tareas.findFirst({
-            where: { id: parseInt(id), tenant_id: tenant_id }
-        });
+        const existe = await prisma.catalogoTarea.findFirst({ where: { id: parseInt(id), tenant_id } });
+        if (!existe) return res.status(404).json({ message: 'Tarea no encontrada' });
 
-        if (!existe) return res.status(404).json({ message: 'Tarea no encontrada o acceso denegado' });
-
-        const tareaActualizada = await prisma.catalogo_tareas.update({
+        const tareaActualizada = await prisma.catalogoTarea.update({
             where: { id: parseInt(id) },
-            data: { nombre, descripcion, activo }
+            data: { codigo, nombre, descripcion, activo }
         });
         res.json(tareaActualizada);
     } catch (error) {
-        console.error("Error actualizando tarea maestra:", error);
-        res.status(500).json({ message: "Error al actualizar la tarea" });
+        if (error.code === 'P2002') return res.status(400).json({ message: 'El código de tarea ya existe.' });
+        res.status(500).json({ message: "Error al actualizar tarea" });
     }
 };
 
-// ==========================================
-// 🚀 EXPORTACIÓN ÚNICA (Estructurada)
-// ==========================================
 module.exports = {
     getMateriales, createMaterial, updateMaterial,
     getOperarios, createOperario, updateOperario,

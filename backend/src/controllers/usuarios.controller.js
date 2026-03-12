@@ -1,76 +1,10 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
-const { hashPassword } = require('../utils/auth'); // Tu encriptador
-const { ROLES } = require('../config/permissions'); // Tu diccionario de roles
-const { validateRut, formatRutForDB } = require('../utils/rut'); // Utilidad para RUT
+const { hashPassword } = require('../utils/auth');
+const { ROLES } = require('../config/permissions');
 
 // ==========================================
-// 🏢 FLUJO 1: SUPER ADMIN CREA CLIENTE (EMPRESA + ADMIN)
-// ==========================================
-const registrarEmpresaYAdmin = async (req, res) => {
-    try {
-        const { nombre_empresa, rut_empresa, alias, nombre_admin, email_admin, password_admin } = req.body;
-
-        // 🛡️ Validar y formatear RUT
-        if (!validateRut(rut_empresa)) {
-            return res.status(400).json({ message: 'El RUT proporcionado es inválido o corrupto.' });
-        }
-        const rutFormateado = formatRutForDB(rut_empresa);
-
-        // 1. Encriptar la contraseña del nuevo cliente
-        const hashedPassword = await hashPassword(password_admin);
-
-        // 2. Transacción: Creamos la Empresa y su Usuario Admin amarrado
-        const resultado = await prisma.$transaction(async (tx) => {
-
-            // A. Nace el Tenant (Empresa)
-            const nuevaEmpresa = await tx.empresas.create({
-                data: {
-                    nombre: nombre_empresa,
-                    rut: rutFormateado,
-                    alias: alias
-                }
-            });
-
-            // B. Nace el Admin inyectándole el ID del Tenant recién creado
-            const nuevoAdmin = await tx.usuarios.create({
-                data: {
-                    tenant_id: nuevaEmpresa.id,
-                    nombre: nombre_admin,
-                    email: email_admin,
-                    password: hashedPassword,
-                    rol: ROLES.ADMIN // Rol fijado por arquitectura
-                }
-            });
-
-            // C. Registro en auditoría del Big Bang
-            await tx.auditoria_empresas.create({
-                data: {
-                    empresa_id: nuevaEmpresa.id,
-                    tipo_evento: 'CAMBIO_PLAN',
-                    valor_anterior: 'Nueva Maestranza',
-                    valor_nuevo: 'Asignación Inicial (Manual)',
-                    justificacion: 'Nacimiento de la empresa y asignación del plan por SuperAdmin.',
-                    modificado_por_id: req.user?.id || nuevoAdmin.id // Evitamos fallo si no hay auth user al correrlo script
-                }
-            });
-
-            return { empresa: nuevaEmpresa, admin: { email: nuevoAdmin.email, id: nuevoAdmin.id } };
-        });
-
-        res.status(201).json({ message: 'Maestranza dada de alta con éxito en el SaaS', data: resultado });
-
-    } catch (error) {
-        console.error("Error al registrar empresa:", error);
-        if (error.code === 'P2002') {
-            return res.status(400).json({ message: "El email del admin o el alias ya están en uso." });
-        }
-        res.status(500).json({ message: "Error interno al crear el cliente." });
-    }
-};
-
-// ==========================================
-// 👷‍♂️ FLUJO 2: ADMIN CREA A SU PERSONAL (EMPLEADOS)
+// 👷‍♂️ FLUJO: ADMIN CREA A SU PERSONAL (EMPLEADOS)
 // ==========================================
 const registrarEmpleado = async (req, res) => {
     try {
@@ -88,7 +22,7 @@ const registrarEmpleado = async (req, res) => {
         const hashedPassword = await hashPassword(password);
 
         // 3. Crear empleado
-        const nuevoEmpleado = await prisma.usuarios.create({
+        const nuevoEmpleado = await prisma.usuario.create({
             data: {
                 tenant_id: tenant_id, // GATILLO: Amarrado a la maestranza del creador
                 nombre: nombre,
@@ -112,6 +46,5 @@ const registrarEmpleado = async (req, res) => {
 };
 
 module.exports = {
-    registrarEmpresaYAdmin,
     registrarEmpleado
 };

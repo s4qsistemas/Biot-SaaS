@@ -1,0 +1,126 @@
+import { useAuth } from '../context/AuthContext';
+import { Link, useLocation } from 'react-router-dom';
+import {
+    LayoutDashboard, FileText, Package, Wrench,
+    Users, BookOpen, LogOut, ChevronLeft, Menu
+} from 'lucide-react';
+
+// 🛡️ IMPORTAMOS LA JAULA DE PERMISOS
+import { tienePermiso, PERMISOS } from '../config/permissions';
+
+const Sidebar = ({ collapsed, setCollapsed }) => {
+    const { user, logout } = useAuth();
+    const location = useLocation();
+
+    // 🛡️ MENÚS DINÁMICOS: Rutas corregidas para no salir del DashboardLayout
+    const menuItems = [
+        { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, roles: PERMISOS.CATALOGOS_LEER }, // Todos ven el home
+        { name: 'Cotizaciones', path: '/dashboard/cotizaciones', icon: FileText, roles: PERMISOS.COTIZACIONES_LEER },
+        { name: 'Inventario', path: '/dashboard/inventario', icon: Package, roles: PERMISOS.INVENTARIO_LEER },
+        { name: 'Órdenes Trabajo', path: '/dashboard/ordenes-trabajo', icon: Wrench, roles: PERMISOS.OT_LEER },
+        { name: 'Entidades', path: '/dashboard/entidades', icon: Users, roles: PERMISOS.ENTIDADES_LEER },
+        { name: 'Catálogos', path: '/dashboard/catalogos', icon: BookOpen, roles: PERMISOS.CATALOGOS_LEER },
+    ];
+
+    return (
+        <>
+            {/* Overlay para móviles */}
+            {!collapsed && (
+                <div
+                    className="fixed inset-0 bg-black/50 z-40 md:hidden"
+                    onClick={() => setCollapsed(true)}
+                />
+            )}
+
+            {/* Sidebar Contenedor */}
+            <aside className={`
+                absolute md:relative z-50 h-full bg-dark-surface border-r border-dark-border transition-all duration-300 flex flex-col
+                ${collapsed ? '-translate-x-full md:translate-x-0 md:w-20' : 'translate-x-0 w-64'}
+            `}>
+                {/* Header del Sidebar */}
+                <div className="p-4 border-b border-dark-border flex justify-between items-center">
+                    {!collapsed && <span className="font-bold text-txt-secondary text-xs uppercase tracking-wider">Menú Principal</span>}
+                    <button
+                        onClick={() => setCollapsed(!collapsed)}
+                        className="p-1.5 rounded-lg bg-dark-bg border border-dark-border text-txt-secondary hover:text-brand transition-colors hidden md:block"
+                    >
+                        {collapsed ? <Menu size={16} /> : <ChevronLeft size={16} />}
+                    </button>
+                    {/* Botón cerrar en móvil */}
+                    <button
+                        onClick={() => setCollapsed(true)}
+                        className="md:hidden p-1.5 text-txt-secondary hover:text-white"
+                    >
+                        <ChevronLeft size={20} />
+                    </button>
+                </div>
+
+                {/* Navegación */}
+                <nav className="flex-1 overflow-y-auto py-4 custom-scrollbar">
+                    <ul className="space-y-1 px-3">
+                        {menuItems.map((item) => {
+                            // 🛡️ Filtro de seguridad visual
+                            const hasAccess = user?.rol === 'super_admin' || tienePermiso(user?.rol, item.roles);
+                            if (!hasAccess) return null;
+
+                            // Corrección de estado activo (Para sub-rutas también)
+                            const isActive = location.pathname === item.path || (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
+                            const Icon = item.icon;
+
+                            return (
+                                <li key={item.path}>
+                                    <Link
+                                        to={item.path}
+                                        title={collapsed ? item.name : ''}
+                                        onClick={() => {
+                                            if (window.innerWidth < 768) setCollapsed(true);
+                                        }}
+                                        className={`flex items-center ${collapsed ? 'justify-center' : 'justify-start'} gap-3 p-3 rounded-xl transition-all duration-200 group
+                                            ${isActive
+                                                ? 'bg-brand/10 text-brand border border-brand/20 shadow-sm'
+                                                : 'text-txt-secondary hover:bg-dark-bg hover:text-white border border-transparent'
+                                            }
+                                        `}
+                                    >
+                                        <Icon size={20} className={`${isActive ? 'text-brand' : 'text-txt-secondary group-hover:text-white'} transition-colors shrink-0`} />
+                                        {!collapsed && (
+                                            <span className="font-medium text-sm whitespace-nowrap">
+                                                {item.name}
+                                            </span>
+                                        )}
+                                    </Link>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                </nav>
+
+                {/* Footer del Sidebar (Usuario) */}
+                <div className="p-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-dark-border">
+                    <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'} mb-4 px-2`}>
+                        <div className="w-8 h-8 rounded-full bg-brand flex items-center justify-center text-white font-bold text-xs shrink-0">
+                            {user?.nombre ? user.nombre.charAt(0).toUpperCase() : 'U'}
+                        </div>
+                        {!collapsed && (
+                            <div className="overflow-hidden">
+                                <p className="text-sm font-medium text-txt-primary truncate">{user?.nombre}</p>
+                                <p className="text-[10px] text-txt-secondary truncate uppercase font-bold tracking-wider">{user?.rol?.replace('_', ' ')}</p>
+                            </div>
+                        )}
+                    </div>
+
+                    <button
+                        onClick={logout}
+                        title={collapsed ? "Cerrar Sesión" : ""}
+                        className={`w-full flex items-center ${collapsed ? 'justify-center' : 'justify-center gap-2'} p-2.5 rounded-lg border border-dark-border text-txt-secondary hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/50 transition-all text-sm`}
+                    >
+                        <LogOut size={16} className="shrink-0" />
+                        {!collapsed && <span className="font-medium">Cerrar Sesión</span>}
+                    </button>
+                </div>
+            </aside>
+        </>
+    );
+};
+
+export default Sidebar;
