@@ -241,12 +241,13 @@ const Catalogos = () => {
                                             <th className="p-4 font-medium">Máquina / Equipo</th>
                                             <th className="p-4 font-medium">Tipo</th>
                                             <th className="p-4 font-medium text-right">Valor Hora (HM)</th>
+                                            <th className="p-4 font-medium text-center">Estado</th>
                                             {puedeEscribir && <th className="p-4 font-medium text-right">Acciones</th>}
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-dark-border">
                                         {equipos.length === 0 ? (
-                                            <tr><td colSpan={puedeEscribir ? "5" : "4"} className="p-8 text-center text-txt-secondary">No hay equipos registrados.</td></tr>
+                                            <tr><td colSpan={puedeEscribir ? "6" : "5"} className="p-8 text-center text-txt-secondary">No hay equipos registrados.</td></tr>
                                         ) : (
                                             equipos.map(e => (
                                                 <tr key={e.id} className="hover:bg-dark-bg/30 transition-colors">
@@ -254,6 +255,11 @@ const Catalogos = () => {
                                                     <td className="p-4 font-medium text-white">{e.nombre}</td>
                                                     <td className="p-4 text-txt-secondary">{e.tipo || '-'}</td>
                                                     <td className="p-4 text-right text-white font-bold">${Number(e.valor_hora).toLocaleString('es-CL')} / hr</td>
+                                                    <td className="p-4 text-center">
+                                                        <span className={`px-2 py-1 rounded text-xs ${e.activo ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                                                            {e.activo ? 'Activo' : 'Inactivo'}
+                                                        </span>
+                                                    </td>
 
                                                     {puedeEscribir && (
                                                         <td className="p-4 text-right">
