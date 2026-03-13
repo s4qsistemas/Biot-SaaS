@@ -71,8 +71,8 @@ const Entidades = () => {
                 entidad.id === id ? { ...entidad, activo: nuevoEstado } : entidad
             ));
         } catch (error) {
-            console.error(error);
-            alert(`Error al ${accion.toLowerCase()} la entidad.`);
+            const msg = error.response?.data?.message || `Error al ${accion.toLowerCase()} la entidad.`;
+            alert(msg);
         }
     };
 

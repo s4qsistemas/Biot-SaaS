@@ -58,6 +58,18 @@ const updateEntidad = async (req, res) => {
 
         if (!existe) return res.status(404).json({ message: "Entidad no encontrada" });
 
+        // 🛡️ RESTRICCIÓN: No desactivar si tiene cotizaciones en BORRADOR
+        if (activo === false && existe.activo === true) {
+            const tieneBorradores = await prisma.cotizacion.findFirst({
+                where: { entidad_id: parseInt(id), estado: 'borrador', tenant_id }
+            });
+            if (tieneBorradores) {
+                return res.status(400).json({ 
+                    message: "No se puede desactivar la entidad porque tiene cotizaciones en estado BORRADOR." 
+                });
+            }
+        }
+
         const entidadActualizada = await prisma.entidad.update({
             where: { id: parseInt(id) },
             data: { nombre, rut, tipo, giro, direccion, comuna, ciudad, email, telefono, contacto_nombre, activo }
@@ -79,6 +91,16 @@ const deleteEntidad = async (req, res) => {
         });
 
         if (!existe) return res.status(404).json({ message: "Entidad no encontrada" });
+
+        // 🛡️ RESTRICCIÓN: No desactivar si tiene cotizaciones en BORRADOR
+        const tieneBorradores = await prisma.cotizacion.findFirst({
+            where: { entidad_id: parseInt(id), estado: 'borrador', tenant_id }
+        });
+        if (tieneBorradores) {
+            return res.status(400).json({ 
+                message: "No se puede desactivar la entidad porque tiene cotizaciones en estado BORRADOR." 
+            });
+        }
 
         await prisma.entidad.update({
             where: { id: parseInt(id) },
