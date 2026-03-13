@@ -112,18 +112,29 @@ const inicializarStock = async (req, res) => {
 
         if (!productoValido) return res.status(404).json({ message: "Producto no válido" });
 
+        // Calcular estado inicial basado en stock mínimo del producto
+        let nuevoEstado = 'disponible';
+        const stockMinimo = Number(productoValido.stock_minimo || 0);
+        const cantidadInicial = parseFloat(cantidad);
+
+        if (cantidadInicial <= 0) {
+            nuevoEstado = 'sin_stock';
+        } else if (cantidadInicial <= stockMinimo) {
+            nuevoEstado = 'bajo_stock';
+        }
+
         // Simplificación de llaves foráneas usando IDs escalares
         const nuevoStock = await prisma.unidadStock.create({
             data: {
                 tenant_id,
                 producto_id: parseInt(producto_id),
                 ubicacion_id: ubicacion_id ? parseInt(ubicacion_id) : null,
-                cantidad_total: parseFloat(cantidad),
-                cantidad_disponible: parseFloat(cantidad),
+                cantidad_total: cantidadInicial,
+                cantidad_disponible: cantidadInicial,
                 cantidad_reservada: 0,
                 tipo_unit: tipo_unidad || 'GRANEL',
                 es_agregado: tipo_unidad === 'GRANEL',
-                estado: 'disponible',
+                estado: nuevoEstado,
             }
         });
 
