@@ -78,7 +78,8 @@ const Cotizaciones = () => {
     const cargarClientes = async () => {
         try {
             const response = await api.get('/api/entidades');
-            setClientes(response.data);
+            // 🛡️ FILTRO: Solo clientes activos para nuevas cotizaciones
+            setClientes(response.data.filter(c => c.activo));
         } catch (error) {
             console.error("Error al cargar clientes:", error);
         }
@@ -90,13 +91,13 @@ const Cotizaciones = () => {
         ]);
 
         const catalogoUnificado = [
-            ...resMat.map(m => ({
+            ...resMat.filter(m => m.activo).map(m => ({
                 id: m.id, codigo: m.codigo, nombreBuscador: `[${m.codigo}] ${m.nombre}`, nombreCliente: m.nombre, precio: m.precio_venta, tipo_item: 'material', etiqueta: '📦 MAT'
             })),
-            ...resHH.map(h => ({
+            ...resHH.filter(h => h.activo).map(h => ({
                 id: h.id, codigo: h.codigo || '', nombreBuscador: `[${h.codigo || 'OPE.---.000'}] ${h.nombre} - ${h.especialidad}`, nombreCliente: `${h.especialidad || 'Operario'} (${h.nombre})`, precio: h.valor_hora, tipo_item: 'hh', etiqueta: '👷‍♂️ OPE'
             })),
-            ...resHM.map(e => ({
+            ...resHM.filter(e => e.activo).map(e => ({
                 id: e.id, codigo: e.codigo || '', nombreBuscador: `[${e.codigo || 'MAQ.---.000'}] ${e.nombre}`, nombreCliente: e.nombre, precio: e.valor_hora, tipo_item: 'hm', etiqueta: '⚙️ MAQ'
             }))
         ];
