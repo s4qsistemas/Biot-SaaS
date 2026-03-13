@@ -1,6 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const { validateRut, formatRutForDB } = require('../utils/rut');
+const { generateToken } = require('../utils/auth');
 
 const prisma = new PrismaClient();
 
@@ -384,4 +385,64 @@ const obtenerHistorialEmpresa = async (req, res) => {
     }
 };
 
-module.exports = { crearMaestranza, obtenerMaestranzas, obtenerPlanes, crearPlan, editarPlan, cambiarPlanEmpresa, editarDatosEmpresa, editarAdminEmpresa, cambiarEstadoEmpresa, obtenerHistorialEmpresa };
+// ==========================================
+// MÓDULO DE SUPLANTACIÓN (IMPERSONATION)
+// ==========================================
+const impersonarEmpresa = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // 1. Buscamos al administrador real de la empresa destino
+        const adminDestino = await prisma.usuario.findFirst({
+            where: { tenant_id: parseInt(id), rol: 'admin', activo: true },
+            include: { empresa: { include: { plan: true } } }
+        });
+
+        if (!adminDestino) {
+            return res.status(404).json({ message: 'Esta empresa no tiene un administrador activo para suplantar.' });
+        }
+
+        // 2. Generamos un token idéntico al de él
+        const token = generateToken({
+            id: adminDestino.id,
+            rol: adminDestino.rol,
+            nombre: adminDestino.nombre,
+            tenant_id: adminDestino.tenant_id
+        });
+
+        // 3. Devolvemos la estructura de login
+        res.json({
+            token,
+            user: {
+                id: adminDestino.id,
+                nombre: adminDestino.nombre,
+                email: adminDestino.email,
+                rol: adminDestino.rol,
+                tenant_id: adminDestino.tenant_id,
+                fecha_vencimiento: adminDestino.empresa?.fecha_vencimiento,
+                empresa: {
+                    nombre: adminDestino.empresa?.nombre,
+                    plan: adminDestino.empresa?.plan?.nombre || 'Sin Plan'
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error("Error al impersonar:", error);
+        res.status(500).json({ message: 'Error interno al intentar acceder a la empresa.' });
+    }
+};
+
+module.exports = {
+    crearMaestranza,
+    obtenerMaestranzas,
+    obtenerPlanes,
+    crearPlan,
+    editarPlan,
+    cambiarPlanEmpresa,
+    editarDatosEmpresa,
+    editarAdminEmpresa,
+    cambiarEstadoEmpresa,
+    obtenerHistorialEmpresa,
+    impersonarEmpresa
+};

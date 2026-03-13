@@ -14,7 +14,7 @@ const authenticate = async (req, res, next) => {
 
     try {
         const decoded = verifyToken(token);
-        
+
         const user = await prisma.usuario.findUnique({
             where: { id: decoded.id },
             select: { id: true, email: true, rol: true, nombre: true, tenant_id: true }
@@ -39,11 +39,17 @@ const authorize = (roles = []) => {
 
     return (req, res, next) => {
         if (!req.user) {
-            return res.status(401).json({ message: 'Unauthorized' });
+            return res.status(401).json({ message: 'No autorizado' });
         }
 
-        if (roles.length && !roles.includes(req.user.rol)) {
-            return res.status(403).json({ message: 'Forbidden: Insufficient permissions' });
+        // 👑 LLAVE MAESTRA: El SuperAdmin es inmune a las restricciones de rol
+        if (req.user.rol === 'super_admin') {
+            return next();
+        }
+
+        // Para los demás, validamos si su rol está en el arreglo de permisos
+        if (!roles.includes(req.user.rol)) {
+            return res.status(403).json({ message: 'Prohibido: No tienes los permisos necesarios' });
         }
 
         next();

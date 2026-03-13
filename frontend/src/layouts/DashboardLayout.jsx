@@ -38,8 +38,13 @@ export default function DashboardLayout() {
 
   const esUrgente = diasRestantes <= 5;
 
-  // 🛡️ REGLA DE NAVEGACIÓN: Si estamos en el home del dashboard, ocultamos la sidebar
-  const isMainDashboard = location.pathname === '/dashboard' || location.pathname === '/dashboard/';
+  // 🛡️ REGLA DE RENDERIZADO VISUAL DE LA SIDEBAR
+  const isImpersonating = !!localStorage.getItem('super_admin_token');
+
+  // Ocultar si estamos en el dashboard principal o si somos el SuperAdmin sin disfraz
+  const hideSidebar =
+    (location.pathname === '/dashboard' || location.pathname === '/dashboard/') ||
+    (user?.rol === 'super_admin' && !isImpersonating);
 
   return (
     <div className="min-h-screen bg-dark-bg flex flex-col font-sans">
@@ -52,8 +57,8 @@ export default function DashboardLayout() {
             {/* Izquierda: Logo / Título */}
             <div className="flex-shrink-0 flex items-center gap-3">
               <span className="font-extrabold text-xl text-brand tracking-tight">Biot SaaS</span>
-              <span className="px-2 py-0.5 rounded-md bg-dark-bg border border-dark-border text-[10px] uppercase font-bold text-txt-secondary tracking-wider hidden sm:block">
-                {user?.rol === 'super_admin' ? 'Root Mode' : 'Portal Maestranza'}
+              <span className={`px-2 py-0.5 rounded-md border text-[10px] uppercase font-bold tracking-wider hidden sm:block ${isImpersonating ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-dark-bg text-txt-secondary border-dark-border'}`}>
+                {user?.rol === 'super_admin' ? (isImpersonating ? 'Modo Suplantación' : 'Root Mode') : 'Portal Maestranza'}
               </span>
             </div>
 
@@ -61,7 +66,9 @@ export default function DashboardLayout() {
             <div className="flex items-center gap-4">
               <div className="text-sm text-right hidden sm:block">
                 <p className="text-txt-primary font-medium leading-none">{user?.nombre || 'Usuario'}</p>
-                <p className="text-txt-secondary text-xs mt-1 capitalize">{user?.rol?.replace('_', ' ') || ''}</p>
+                <p className="text-txt-secondary text-xs mt-1 capitalize">
+                  {isImpersonating ? 'Suplantando Admin' : user?.rol?.replace('_', ' ') || ''}
+                </p>
               </div>
 
               <div className="h-8 w-px bg-dark-border mx-1"></div>
@@ -111,7 +118,7 @@ export default function DashboardLayout() {
       <div className="flex flex-1 overflow-hidden relative">
 
         {/* Renderizado Condicional de la Sidebar */}
-        {!isMainDashboard && (
+        {!hideSidebar && (
           <Sidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
         )}
 

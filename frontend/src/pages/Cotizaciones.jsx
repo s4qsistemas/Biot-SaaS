@@ -6,12 +6,12 @@ import api from '../utils/api';
 
 // 🛡️ IMPORTACIONES DE SEGURIDAD FRONTEND
 import { useAuth } from '../context/AuthContext';
-import { tienePermiso, PERMISOS } from '../config/permissions';
+import { tienePermiso, PERMISOS_FRONT } from '../config/permissions';
 
 const Cotizaciones = () => {
     const { user } = useAuth();
     // 🛡️ CANDADO DE ESCRITURA
-    const puedeEscribir = tienePermiso(user?.rol, PERMISOS.COTIZACIONES_ESCRIBIR);
+    const puedeEscribir = tienePermiso(user?.rol, PERMISOS_FRONT.COTIZACIONES_ESCRIBIR);
 
     const [cotizaciones, setCotizaciones] = useState([]);
     const [loading, setLoading] = useState(true);

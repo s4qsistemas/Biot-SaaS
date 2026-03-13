@@ -1,23 +1,16 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { tienePermiso } from '../config/permissions';
 
-const RoleGuard = ({ permiso = [] }) => {
+export default function RoleGuard({ permiso }) {
     const { user, loading } = useAuth();
 
-    if (loading) {
-        return <div className="p-8 text-txt-secondary">Verificando accesos...</div>;
-    }
+    if (loading) return null; // Evitar redirecciones fantasmas mientras carga
 
-    if (!user) {
-        return <Navigate to="/login" replace />;
-    }
-
-    // Comparamos el rol del usuario contra la "llave" (arreglo) que exige la ruta
-    if (!permiso.includes(user.rol)) {
+    // Si el usuario no tiene la llave, lo pateamos al dashboard inicial
+    if (!tienePermiso(user?.rol, permiso)) {
         return <Navigate to="/dashboard" replace />;
     }
 
     return <Outlet />;
-};
-
-export default RoleGuard;
+}

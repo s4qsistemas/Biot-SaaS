@@ -4,7 +4,7 @@ import api from '../utils/api';
 
 // 🛡️ IMPORTACIONES DE SEGURIDAD FRONTEND
 import { useAuth } from '../context/AuthContext';
-import { tienePermiso, PERMISOS } from '../config/permissions';
+import { tienePermiso, PERMISOS_FRONT } from '../config/permissions';
 
 // ==========================================
 // 🚀 COMPONENTE UI: BUSCADOR INTELIGENTE
@@ -67,8 +67,8 @@ const OrdenesTrabajo = () => {
     const { user } = useAuth();
 
     // 🛡️ CANDADOS DE SEGURIDAD CENTRALIZADOS
-    const puedeGestionarOT = tienePermiso(user?.rol, PERMISOS.OT_GESTION_MAESTRA);
-    const puedeOperarTaller = tienePermiso(user?.rol, PERMISOS.OT_OPERACION_TALLER);
+    const puedeGestionarOT = tienePermiso(user?.rol, PERMISOS_FRONT.OT_FINANZAS);
+    const puedeOperarTaller = tienePermiso(user?.rol, PERMISOS_FRONT.OT_TALLER_OPERAR);
     const puedeVerFinanzas = puedeGestionarOT; // Los operarios no ven plata
 
     const [isOtEmailModalOpen, setIsOtEmailModalOpen] = useState(false);

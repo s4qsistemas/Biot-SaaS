@@ -1,85 +1,69 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom'; // 👈 Motor de navegación
 import api from '../utils/api';
+
 import ModalCrearMaestranza from '../components/superadmin/ModalCrearMaestranza';
 import ModalEditarMaestranza from '../components/superadmin/ModalEditarMaestranza';
 import ModalGestionPlanes from '../components/superadmin/ModalGestionPlanes';
 import ModalCambiarPlan from '../components/superadmin/ModalCambiarPlan';
 import ModalCambiarEstado from '../components/superadmin/ModalCambiarEstado';
 import ModalAuditoria from '../components/superadmin/ModalAuditoria';
+import { Plus, Edit, Power, TrendingUp, History, ShieldCheck, Building } from 'lucide-react';
 
 export default function SuperAdminDashboard() {
-    const { user } = useAuth();
+    // 👈 Extraemos impersonate del AuthContext
+    const { user, impersonate } = useAuth();
+    const navigate = useNavigate();
 
     const [empresas, setEmpresas] = useState([]);
     const [cargando, setCargando] = useState(true);
 
-    // Estados Modal Crear
+    // Estados Modales
     const [isModalCrearOpen, setIsModalCrearOpen] = useState(false);
-
-    // 👈 2. Nuevos Estados Modal Editar
     const [isModalEditarOpen, setIsModalEditarOpen] = useState(false);
     const [empresaAEditar, setEmpresaAEditar] = useState(null);
-
     const [isModalPlanesOpen, setIsModalPlanesOpen] = useState(false);
-
     const [isModalCambiarPlanOpen, setIsModalCambiarPlanOpen] = useState(false);
-
     const [isModalCambiarEstadoOpen, setIsModalCambiarEstadoOpen] = useState(false);
-
     const [isModalAuditoriaOpen, setIsModalAuditoriaOpen] = useState(false);
-
-    const cargarEmpresas = async () => {
-        try {
-            setCargando(true);
-            const { data } = await api.get('/api/superadmin/empresas');
-            setEmpresas(data);
-        } catch (error) {
-            console.error('Error al cargar maestranzas:', error);
-        } finally {
-            setCargando(false);
-        }
-    };
 
     useEffect(() => {
         cargarEmpresas();
     }, []);
 
-    const handleCrearMaestranza = async (formData) => {
+    const cargarEmpresas = async () => {
         try {
-            await api.post('/api/superadmin/empresa', formData);
-            alert('¡Maestranza y Administrador creados con éxito!');
+            const res = await api.get('/api/superadmin/empresas');
+            setEmpresas(res.data);
+        } catch (error) {
+            console.error('Error al cargar empresas', error);
+        } finally {
+            setCargando(false);
+        }
+    };
+
+    const handleCrearMaestranza = async (datos) => {
+        try {
+            await api.post('/api/superadmin/empresa', datos);
             setIsModalCrearOpen(false);
-            await cargarEmpresas();
+            cargarEmpresas();
         } catch (error) {
-            alert(error.response?.data?.message || 'Error interno al crear la maestranza');
+            alert(error.response?.data?.message || 'Error al crear empresa');
         }
     };
 
-    // 👈 3. Función para recibir los datos de edición y hacer el PUT
-    const handleEditarMaestranza = async (id, formData) => {
-        try {
-            await api.put(`/api/superadmin/empresa/${id}`, formData);
-            alert('¡Maestranza actualizada con éxito!');
-            setIsModalEditarOpen(false);
-            await cargarEmpresas();
-        } catch (error) {
-            alert(error.response?.data?.message || 'Error al actualizar la maestranza');
-        }
-    };
-
-    // 👈 4. Función que se dispara al hacer clic en "Editar" en la tabla
-    const abrirModalEditar = (empresa) => {
+    const abrirModalEdicion = (empresa) => {
         setEmpresaAEditar(empresa);
         setIsModalEditarOpen(true);
     };
 
-    const abrirModalPlan = (empresa) => {
+    const abrirModalCambioPlan = (empresa) => {
         setEmpresaAEditar(empresa);
         setIsModalCambiarPlanOpen(true);
     };
 
-    const abrirModalEstado = (empresa) => {
+    const abrirModalCambiarEstado = (empresa) => {
         setEmpresaAEditar(empresa);
         setIsModalCambiarEstadoOpen(true);
     };
@@ -89,118 +73,153 @@ export default function SuperAdminDashboard() {
         setIsModalAuditoriaOpen(true);
     };
 
+    // ⚡ LÓGICA DE SUPLANTACIÓN (DOBLE CLIC)
+    const handleImpersonate = async (empresaId) => {
+        try {
+            console.log("1. Gatillo presionado para la empresa:", empresaId); // 👈 Agrega este log para probar
+            await impersonate(empresaId);
+            console.log("3. Suplantación exitosa, redirigiendo..."); // 👈 Y este
+            navigate('/dashboard');
+        } catch (error) {
+            console.error("Error en impersonate:", error);
+            alert("Error al intentar acceder al panel de esta empresa.");
+        }
+    };
+
     return (
-        <div className="min-h-screen bg-dark-bg p-6 font-sans">
-            <div className="max-w-6xl mx-auto mb-8 flex justify-between items-center">
+        <div className="p-6 max-w-7xl mx-auto space-y-6">
+            <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <div>
-                    <h1 className="text-2xl font-bold text-brand">Panel de Control SaaS</h1>
-                    <p className="text-sm text-txt-secondary">Bienvenido, {user?.nombre || 'Super Admin'}.</p>
+                    <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+                        <ShieldCheck className="text-brand" size={32} />
+                        Panel SaaS
+                    </h1>
+                    <p className="text-txt-secondary mt-1">Gestión centralizada de maestranzas y facturación.</p>
                 </div>
                 <div className="flex gap-3">
-                    <button onClick={() => setIsModalPlanesOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-dark-surface border border-dark-border text-txt-primary font-medium rounded-lg hover:border-brand transition-colors shadow-sm">
-                        ⚙️ Gestionar Planes
+                    <button
+                        onClick={() => setIsModalPlanesOpen(true)}
+                        className="bg-dark-surface border border-dark-border text-white px-4 py-2 rounded-lg font-medium hover:border-brand transition-colors"
+                    >
+                        Gestor de Planes
                     </button>
-                    <button onClick={() => setIsModalCrearOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-brand text-white font-medium rounded-lg hover:bg-brand-dark transition-colors shadow-sm">
+                    <button
+                        onClick={() => setIsModalCrearOpen(true)}
+                        className="bg-brand text-white px-4 py-2 rounded-lg font-medium hover:bg-brand-hover transition-colors shadow-lg shadow-brand/20 flex items-center gap-2"
+                    >
+                        <Plus size={18} />
                         Nueva Maestranza
                     </button>
                 </div>
-            </div>
+            </header>
 
-            <section className="bg-dark-surface rounded-2xl shadow-xl border border-dark-border p-6 max-w-6xl mx-auto">
-                <h2 className="text-lg font-semibold text-txt-primary mb-4">Empresas Registradas</h2>
-                <div className="overflow-x-auto min-h-[400px]"> {/* min-h añadido para que el dropdown no corte la tabla */}
-                    <table className="min-w-full text-sm text-left">
-                        <thead className="bg-dark-bg text-txt-secondary uppercase text-xs font-semibold">
-                            <tr>
-                                <th className="py-3 px-4 rounded-tl-lg">Empresa</th>
-                                <th className="py-3 px-4">Alias (URL)</th>
-                                <th className="py-3 px-4">Plan & Vencimiento</th>
-                                <th className="py-3 px-4">Administrador</th>
-                                <th className="py-3 px-4">Estado</th>
-                                <th className="py-3 px-4 rounded-tr-lg text-right">Acciones</th>
+            <section className="bg-dark-surface rounded-xl border border-dark-border shadow-sm overflow-hidden">
+                <div className="p-4 border-b border-dark-border bg-dark-bg/50 flex justify-between items-center">
+                    <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                        <Building size={20} className="text-txt-secondary" />
+                        Maestranzas Activas
+                    </h2>
+                    <span className="bg-brand/10 text-brand px-3 py-1 rounded-full text-xs font-bold border border-brand/20">
+                        Total: {empresas.length}
+                    </span>
+                </div>
+
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-dark-bg/80 text-txt-secondary text-xs uppercase tracking-wider border-b border-dark-border">
+                                <th className="p-4 font-semibold">Empresa</th>
+                                <th className="p-4 font-semibold">Administrador</th>
+                                <th className="p-4 font-semibold">Plan Actual</th>
+                                <th className="p-4 font-semibold">Vencimiento</th>
+                                <th className="p-4 font-semibold text-center">Estado</th>
+                                <th className="p-4 font-semibold text-right">Acciones</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-dark-border">
                             {cargando ? (
-                                <tr><td colSpan="6" className="py-8 text-center text-txt-secondary">Cargando datos del servidor...</td></tr>
+                                <tr><td colSpan="6" className="p-8 text-center text-txt-secondary">Cargando empresas...</td></tr>
                             ) : empresas.length === 0 ? (
-                                <tr><td colSpan="6" className="py-8 text-center text-txt-secondary">No hay empresas registradas aún.</td></tr>
+                                <tr><td colSpan="6" className="p-8 text-center text-txt-secondary">No hay empresas registradas.</td></tr>
                             ) : (
-                                empresas.map(emp => (
-                                    <tr key={emp.id} className="hover:bg-dark-bg/50 transition-colors">
-                                        <td className="py-3 px-4 font-medium text-txt-primary">{emp.nombre}<br /><span className="text-xs text-txt-secondary">RUT: {emp.rut}</span></td>
-                                        <td className="py-3 px-4 font-mono text-xs text-brand">{emp.alias}</td>
-
-                                        {/* 👇 CELDA DEL PLAN + COUNTDOWN */}
-                                        <td className="py-3 px-4">
-                                            <div className="flex flex-col items-start gap-1">
-                                                <span className="px-2 py-0.5 bg-blue-900/30 text-brand border border-brand/20 rounded text-[11px] font-semibold">
-                                                    {emp.plan_nombre}
-                                                </span>
-                                                {emp.dias_restantes !== null ? (
-                                                    <div className={`text-[10px] font-bold flex items-center gap-1 ${emp.dias_restantes <= 0 ? 'text-red-500' :
-                                                        emp.dias_restantes <= 5 ? 'text-orange-400' :
-                                                            'text-txt-secondary'
-                                                        }`}>
-                                                        {emp.dias_restantes <= 0 ? '⚠️ Expirado' : `⏳ Quedan ${emp.dias_restantes} días`}
-                                                    </div>
-                                                ) : (
-                                                    <div className="text-[10px] font-bold text-txt-secondary">
-                                                        ∞ Ilimitado
-                                                    </div>
-                                                )}
-                                            </div>
+                                empresas.map((empresa) => (
+                                    <tr
+                                        key={empresa.id}
+                                        onDoubleClick={() => handleImpersonate(empresa.id)} // 👈 GATILLO DEL DOBLE CLIC
+                                        className={`hover:bg-brand/10 transition-colors cursor-pointer group ${empresa.estado !== 'activa' ? 'opacity-60 grayscale-[0.5]' : ''}`} // 👈 EFECTO VISUAL SUSPENDIDA
+                                        title="Doble clic para entrar a esta empresa"
+                                    >
+                                        <td className="p-4">
+                                            <p className="font-bold text-white group-hover:text-brand transition-colors">{empresa.nombre}</p>
+                                            <p className="text-xs text-txt-secondary font-mono mt-0.5">{empresa.rut}</p>
                                         </td>
-
-                                        <td className="py-3 px-4 text-txt-primary">{emp.admin_nombre}<br /><span className="text-xs text-txt-secondary">{emp.admin_email}</span></td>
-                                        <td className="py-3 px-4">
-                                            <span className={`px-2 py-1 rounded-full text-[11px] font-semibold ${emp.estado === 'activa' ? 'bg-emerald-900/30 text-emerald-400 border border-emerald-800' : 'bg-red-900/30 text-red-400 border border-red-800'}`}>
-                                                {emp.estado === 'activa' ? 'Activa' : 'Suspendida'}
+                                        <td className="p-4">
+                                            {empresa.admin_nombre ? (
+                                                <>
+                                                    <p className="font-medium text-slate-300 text-sm">{empresa.admin_nombre}</p>
+                                                    <p className="text-xs text-txt-secondary">{empresa.admin_email}</p>
+                                                </>
+                                            ) : (
+                                                <span className="text-xs italic text-red-400">Sin administrador</span>
+                                            )}
+                                        </td>
+                                        <td className="p-4">
+                                            <span className={`px-2 py-1 rounded text-xs font-bold border
+                                                ${(empresa.plan_nombre || '').toLowerCase().includes('trial')
+                                                    ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                                                    : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}
+                                            >
+                                                {empresa.plan_nombre || 'Ninguno'}
                                             </span>
                                         </td>
+                                        <td className="p-4">
+                                            <p className="text-sm text-slate-300">
+                                                {new Date(empresa.fecha_vencimiento).toLocaleDateString('es-CL')}
+                                            </p>
+                                            {/* 👈 RECUPERADO: DÍAS RESTANTES COMO LO TENÍAS */}
+                                            {empresa.dias_restantes !== null && (
+                                                <p className={`text-[10px] font-bold mt-0.5 ${empresa.dias_restantes <= 5 ? 'text-red-400 animate-pulse' : 'text-txt-secondary'}`}>
+                                                    Quedan {empresa.dias_restantes} días
+                                                </p>
+                                            )}
+                                        </td>
+                                        <td className="p-4 text-center">
+                                            <span className={`px-2 py-1 rounded text-xs font-bold uppercase border
+                                                ${empresa.estado === 'activa'
+                                                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                                    : 'bg-red-500/10 text-red-400 border-red-500/20'}`}
+                                            >
+                                                {empresa.estado === 'activa' ? 'Activa' : 'Suspendida'}
+                                            </span>
+                                        </td>
+                                        <td className="p-4 text-right">
+                                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button onClick={() => abrirModalAuditoria(empresa)} className="p-1.5 text-txt-secondary hover:text-white hover:bg-dark-bg rounded transition-colors" title="Ver Historial de Cambios">
+                                                    <History size={16} />
+                                                </button>
+                                                <div className="w-px h-6 bg-dark-border mx-1"></div>
 
-                                        {/* 👇 NUEVO MENÚ DE ACCIONES (Iconos SVG) */}
-                                        <td className="py-3 px-4 text-right">
-                                            <div className="flex justify-end gap-2">
-
-                                                {/* 1. Botón Editar Datos */}
+                                                {/* 👈 RECUPERADO: BLOQUEO DE BOTONES SI ESTÁ SUSPENDIDA */}
                                                 <button
-                                                    onClick={() => abrirModalEditar(emp)}
-                                                    disabled={emp.estado !== 'activa'}
-                                                    className={`p-1.5 rounded-lg transition-colors border ${emp.estado !== 'activa' ? 'opacity-50 cursor-not-allowed text-blue-400 bg-blue-400/10 border-blue-400/30' : 'text-blue-400 bg-blue-400/10 hover:bg-blue-400/20 border-blue-400/30'}`}
-                                                    title={emp.estado !== 'activa' ? 'No disponible para empresas suspendidas' : 'Editar Datos Básicos'}
+                                                    onClick={() => abrirModalEdicion(empresa)}
+                                                    disabled={empresa.estado !== 'activa'}
+                                                    className={`p-1.5 rounded transition-colors ${empresa.estado === 'activa' ? 'text-txt-secondary hover:text-brand hover:bg-brand/10' : 'text-dark-border cursor-not-allowed'}`}
+                                                    title={empresa.estado === 'activa' ? "Editar Datos y Credenciales" : "Empresa suspendida"}
                                                 >
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                                    <Edit size={16} />
+                                                </button>
+                                                <button
+                                                    onClick={() => abrirModalCambioPlan(empresa)}
+                                                    disabled={empresa.estado !== 'activa'}
+                                                    className={`p-1.5 rounded transition-colors ${empresa.estado === 'activa' ? 'text-txt-secondary hover:text-blue-400 hover:bg-blue-500/10' : 'text-dark-border cursor-not-allowed'}`}
+                                                    title={empresa.estado === 'activa' ? "Upgrade / Downgrade Plan" : "Empresa suspendida"}
+                                                >
+                                                    <TrendingUp size={16} />
                                                 </button>
 
-                                                {/* 2. Botón Cambiar Plan */}
-                                                <button
-                                                    onClick={() => abrirModalPlan(emp)}
-                                                    disabled={emp.estado !== 'activa'}
-                                                    className={`p-1.5 rounded-lg transition-colors border ${emp.estado !== 'activa' ? 'opacity-50 cursor-not-allowed text-emerald-400 bg-emerald-400/10 border-emerald-400/30' : 'text-emerald-400 bg-emerald-400/10 hover:bg-emerald-400/20 border-emerald-400/30'}`}
-                                                    title={emp.estado !== 'activa' ? 'No disponible para empresas suspendidas' : 'Modificar Plan de Suscripción'}
-                                                >
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+                                                <button onClick={() => abrirModalCambiarEstado(empresa)} className={`p-1.5 rounded transition-colors ${empresa.estado === 'activa' ? 'text-txt-secondary hover:text-red-400 hover:bg-red-500/10' : 'text-txt-secondary hover:text-emerald-400 hover:bg-emerald-500/10'}`} title={empresa.estado === 'activa' ? "Suspender Empresa" : "Activar Empresa"}>
+                                                    <Power size={16} />
                                                 </button>
-
-                                                {/* 3. Botón Estado (Suspender/Activar) */}
-                                                <button
-                                                    onClick={() => abrirModalEstado(emp)}
-                                                    className={`p-1.5 rounded-lg transition-colors border ${emp.estado === 'activa' ? 'text-orange-400 bg-orange-400/10 hover:bg-orange-400/20 border-orange-400/30' : 'text-emerald-400 bg-emerald-400/10 hover:bg-emerald-400/20 border-emerald-400/30'}`}
-                                                    title={emp.estado === 'activa' ? 'Suspender Empresa' : 'Activar Empresa'}
-                                                >
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
-                                                </button>
-
-                                                {/* 4. Botón Auditar */}
-                                                <button
-                                                    onClick={() => abrirModalAuditoria(emp)}
-                                                    className="p-1.5 text-purple-400 bg-purple-400/10 hover:bg-purple-400/20 border border-purple-400/30 rounded-lg transition-colors"
-                                                    title="Ver Historial de Auditoría"
-                                                >
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                                                </button>
-
                                             </div>
                                         </td>
                                     </tr>
@@ -211,42 +230,12 @@ export default function SuperAdminDashboard() {
                 </div>
             </section>
 
-            <ModalCrearMaestranza
-                isOpen={isModalCrearOpen}
-                onClose={() => setIsModalCrearOpen(false)}
-                onSubmit={handleCrearMaestranza}
-            />
-
-            <ModalEditarMaestranza
-                isOpen={isModalEditarOpen}
-                onClose={() => setIsModalEditarOpen(false)}
-                empresaData={empresaAEditar}
-                onUpdateSuccess={cargarEmpresas}
-            />
-
-            <ModalGestionPlanes
-                isOpen={isModalPlanesOpen}
-                onClose={() => setIsModalPlanesOpen(false)}
-            />
-
-            <ModalCambiarPlan
-                isOpen={isModalCambiarPlanOpen}
-                onClose={() => setIsModalCambiarPlanOpen(false)}
-                empresaData={empresaAEditar}
-                onUpdateSuccess={cargarEmpresas}
-            />
-
-            <ModalCambiarEstado
-                isOpen={isModalCambiarEstadoOpen}
-                onClose={() => setIsModalCambiarEstadoOpen(false)}
-                empresaData={empresaAEditar}
-                onUpdateSuccess={cargarEmpresas}
-            />
-            <ModalAuditoria
-                isOpen={isModalAuditoriaOpen}
-                onClose={() => setIsModalAuditoriaOpen(false)}
-                empresaData={empresaAEditar}
-            />
+            <ModalCrearMaestranza isOpen={isModalCrearOpen} onClose={() => setIsModalCrearOpen(false)} onSubmit={handleCrearMaestranza} />
+            <ModalEditarMaestranza isOpen={isModalEditarOpen} onClose={() => setIsModalEditarOpen(false)} empresaData={empresaAEditar} onUpdateSuccess={cargarEmpresas} />
+            <ModalGestionPlanes isOpen={isModalPlanesOpen} onClose={() => setIsModalPlanesOpen(false)} />
+            <ModalCambiarPlan isOpen={isModalCambiarPlanOpen} onClose={() => setIsModalCambiarPlanOpen(false)} empresaData={empresaAEditar} onUpdateSuccess={cargarEmpresas} />
+            <ModalCambiarEstado isOpen={isModalCambiarEstadoOpen} onClose={() => setIsModalCambiarEstadoOpen(false)} empresaData={empresaAEditar} onUpdateSuccess={cargarEmpresas} />
+            <ModalAuditoria isOpen={isModalAuditoriaOpen} onClose={() => setIsModalAuditoriaOpen(false)} empresaData={empresaAEditar} />
         </div>
     );
 }

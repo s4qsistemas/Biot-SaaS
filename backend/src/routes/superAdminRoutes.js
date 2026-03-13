@@ -6,23 +6,29 @@ const {
     crearMaestranza, obtenerMaestranzas,
     editarDatosEmpresa, editarAdminEmpresa,
     cambiarEstadoEmpresa, cambiarPlanEmpresa, obtenerHistorialEmpresa,
-    obtenerPlanes, crearPlan, editarPlan
+    obtenerPlanes, crearPlan, editarPlan,
+    impersonarEmpresa // 👈 NO OLVIDES IMPORTARLA
 } = require('../controllers/superAdminController');
 
-// 🔒 CANDADO ABSOLUTO: Todas las rutas de este archivo exigen ser super_admin
-router.use(authorize(['super_admin']));
+const { PERMISOS } = require('../config/permissions');
+
+// 🔒 CANDADO ABSOLUTO: Usa el diccionario centralizado
+router.use(authorize(PERMISOS.SAAS_GESTION));
+
+// 🎭 RUTA DEL DISFRAZ (IMPERSONATION)
+router.post('/empresa/:id/impersonate', impersonarEmpresa); // 👈 AGREGA ESTA LÍNEA
 
 // 🏢 RUTAS DE EMPRESAS (Atómicas)
 router.post('/empresa', crearMaestranza);
 router.get('/empresas', obtenerMaestranzas);
 
-// Ediciones sin impacto comercial (No requieren justificación)
-router.put('/empresa/:id/datos', editarDatosEmpresa); // Razón social y Alias
-router.put('/empresa/:id/admin', editarAdminEmpresa); // Nombre, email y Reset de Clave
+// Ediciones sin impacto comercial
+router.put('/empresa/:id/datos', editarDatosEmpresa);
+router.put('/empresa/:id/admin', editarAdminEmpresa);
 
-// Ediciones de impacto crítico (Requieren justificación y auditan)
-router.put('/empresa/:id/estado', cambiarEstadoEmpresa); // Suspender o Activar
-router.put('/empresa/:id/plan', cambiarPlanEmpresa);     // Upgrade de Plan (Bloquea downgrade a Trial)
+// Ediciones de impacto crítico
+router.put('/empresa/:id/estado', cambiarEstadoEmpresa);
+router.put('/empresa/:id/plan', cambiarPlanEmpresa);
 
 // 📜 RUTA DE AUDITORÍA
 router.get('/empresa/:id/auditoria', obtenerHistorialEmpresa);

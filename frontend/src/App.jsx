@@ -1,7 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import RoleGuard from './components/RoleGuard';
-import { PERMISOS } from './config/permissions';
+
+// 🛡️ IMPORTAR EL NUEVO DICCIONARIO
+import { PERMISOS_FRONT } from './config/permissions';
 
 // Layouts & Pages
 import DashboardLayout from './layouts/DashboardLayout';
@@ -20,7 +22,7 @@ import Inventario from './pages/Inventario';
 import Cotizaciones from './pages/Cotizaciones';
 import OrdenesTrabajo from './pages/OrdenesTrabajo';
 
-// 🛡️ GUARDIA DE SEGURIDAD PARA RUTAS PRIVADAS
+// 🛡️ GUARDIA DE SEGURIDAD PARA RUTAS PRIVADAS (Jaula y Paywall)
 const PrivateRoute = () => {
   const { user, loading } = useAuth();
   const location = useLocation();
@@ -37,49 +39,47 @@ const PrivateRoute = () => {
     return <Navigate to="/login" replace />;
   }
 
-  // 1. LÓGICA DE DÍAS RESTANTES (PAYWALL)
-  // ⏱️ LÓGICA DE DÍAS (Calendario Estricto / Regla de las 23:59:59)
+  // 🛡️ DETECCIÓN DEL DISFRAZ (INMUNIDAD)
+  const isImpersonating = !!localStorage.getItem('super_admin_token');
+
+  // ⏱️ LÓGICA DE DÍAS
   const calcularDiasRestantes = (fecha) => {
     if (!fecha) return null;
-
-    // 1. Tomamos la fecha de hoy exacta
     const hoy = new Date();
-
-    // 2. Tomamos la fecha de vencimiento y forzamos la hora al último milisegundo del día
     const vencimiento = new Date(fecha);
     vencimiento.setHours(23, 59, 59, 999);
-
-    // 3. Diferencia exacta en milisegundos
     const diferenciaMs = vencimiento.getTime() - hoy.getTime();
-
-    // 4. Calculamos días limpios usando Math.ceil para incluir la fracción del día actual
     return Math.ceil(diferenciaMs / (1000 * 60 * 60 * 24));
   };
 
   const diasRestantes = calcularDiasRestantes(user.fecha_vencimiento);
-  // ¿Es cliente, tiene fecha y se le acabó el tiempo (0 o negativo)?
   const estaExpirado = user.rol !== 'super_admin' && diasRestantes !== null && diasRestantes <= 0;
 
-  // 2. RUTAS ACTUALES
   const isCambiarClavePath = location.pathname === '/cambiar-clave';
   const isPaywallPath = location.pathname === '/paywall';
 
-  // 🛑 TRAMPA 1: JAULA DE CLAVE (Prioridad Máxima)
-  if (user.debe_cambiar_password && !isCambiarClavePath) {
+  // 🛑 TRAMPA 1: JAULA DE CLAVE (El SuperAdmin disfrazado es inmune)
+  if (user.debe_cambiar_password && !isCambiarClavePath && !isImpersonating) {
     return <Navigate to="/cambiar-clave" replace />;
   }
   if (!user.debe_cambiar_password && isCambiarClavePath) {
     return <Navigate to="/dashboard" replace />;
   }
 
-  // 🛑 TRAMPA 2: MURO DE PAGO (Si ya cambió la clave, evaluamos si expiró)
-  if (!user.debe_cambiar_password) {
-    if (estaExpirado && !isPaywallPath) {
-      return <Navigate to="/paywall" replace />; // 👈 Secuestro automático
+  // 🛑 TRAMPA 2: MURO DE PAGO (El SuperAdmin disfrazado es inmune)
+  if (!user.debe_cambiar_password || isImpersonating) {
+    if (estaExpirado && !isPaywallPath && !isImpersonating) {
+      return <Navigate to="/paywall" replace />;
     }
     if (!estaExpirado && isPaywallPath) {
-      return <Navigate to="/dashboard" replace />; // 👈 Si pagó, lo sacamos del muro
+      return <Navigate to="/dashboard" replace />;
     }
+  }
+
+  // 👑 REDIRECCIÓN RAÍZ DEL SUPER ADMIN
+  // Si entra a /dashboard sin disfraz, lo mandamos a su panel de empresas
+  if (user.rol === 'super_admin' && !isImpersonating && (location.pathname === '/dashboard' || location.pathname === '/dashboard/')) {
+    return <Navigate to="/root" replace />;
   }
 
   return <Outlet />;
@@ -97,34 +97,46 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/contacto" element={<Contacto />} />
 
-          {/* 🔐 RUTAS PRIVADAS (Blindadas por PrivateRoute) */}
+          {/* 🔐 RUTAS PRIVADAS */}
           <Route element={<PrivateRoute />}>
-
-            {/* 🛑 JAULA 1: Cambio de Clave Obligatorio */}
             <Route path="/cambiar-clave" element={<CambiarClave />} />
-
-            {/* 🛑 JAULA 2: Muro de Pago / Facturación */}
             <Route path="/paywall" element={<Paywall />} />
 
             <Route element={<DashboardLayout />}>
 
-              {/* Acceso exclusivo SuperAdmin */}
-              <Route element={<RoleGuard permiso={PERMISOS.SAAS_CREAR_EMPRESA} />}>
+              {/* 👑 ROOT: Solo SuperAdmin */}
+              <Route element={<RoleGuard permiso={PERMISOS_FRONT.SAAS_GESTION} />}>
                 <Route path="/root" element={<SuperAdminDashboard />} />
               </Route>
 
-              {/* Dashboard general de las Maestranzas */}
+              {/* 🏢 Dashboard general */}
               <Route path="/dashboard" element={<AdminDashboard />} />
 
-              {/* 💸 NUEVA RUTA: Portal Interno de Planes */}
-              <Route path="/dashboard/planes" element={<PortalPlanes />} />
+              {/* 💸 FACTURACIÓN */}
+              <Route element={<RoleGuard permiso={PERMISOS_FRONT.USUARIOS_CREAR_EMPLEADO} />}>
+                <Route path="/dashboard/planes" element={<PortalPlanes />} />
+              </Route>
 
-              {/* Nuevas Secciones Operativas */}
-              <Route path="/dashboard/catalogos" element={<Catalogos />} />
-              <Route path="/dashboard/entidades" element={<Entidades />} />
-              <Route path="/dashboard/inventario" element={<Inventario />} />
-              <Route path="/dashboard/cotizaciones" element={<Cotizaciones />} />
-              <Route path="/dashboard/ordenes-trabajo" element={<OrdenesTrabajo />} />
+              {/* 🛡️ RUTAS OPERATIVAS */}
+              <Route element={<RoleGuard permiso={PERMISOS_FRONT.CATALOGOS_LEER} />}>
+                <Route path="/dashboard/catalogos" element={<Catalogos />} />
+              </Route>
+
+              <Route element={<RoleGuard permiso={PERMISOS_FRONT.ENTIDADES_LEER} />}>
+                <Route path="/dashboard/entidades" element={<Entidades />} />
+              </Route>
+
+              <Route element={<RoleGuard permiso={PERMISOS_FRONT.INVENTARIO_LEER} />}>
+                <Route path="/dashboard/inventario" element={<Inventario />} />
+              </Route>
+
+              <Route element={<RoleGuard permiso={PERMISOS_FRONT.COTIZACIONES_LEER} />}>
+                <Route path="/dashboard/cotizaciones" element={<Cotizaciones />} />
+              </Route>
+
+              <Route element={<RoleGuard permiso={PERMISOS_FRONT.OT_LEER} />}>
+                <Route path="/dashboard/ordenes-trabajo" element={<OrdenesTrabajo />} />
+              </Route>
 
               {/* Redirección salvavidas */}
               <Route path="*" element={<Navigate to="/dashboard" replace />} />

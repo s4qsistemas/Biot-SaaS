@@ -6,7 +6,7 @@ import EntidadModal from '../components/EntidadModal';
 import { formatRut } from '../utils/rut';
 
 // 🛡️ IMPORTAMOS LA JAULA DE SEGURIDAD FRONTEND
-import { tienePermiso, PERMISOS } from '../config/permissions';
+import { tienePermiso, PERMISOS_FRONT } from '../config/permissions';
 
 const Entidades = () => {
     const [entidades, setEntidades] = useState([]);
@@ -18,7 +18,7 @@ const Entidades = () => {
     const { user } = useAuth();
 
     // 🛡️ PERMISOS CENTRALIZADOS (Nada de strings duros)
-    const tienePermisosCompletos = tienePermiso(user?.rol, PERMISOS.ENTIDADES_ESCRIBIR);
+    const tienePermisosCompletos = tienePermiso(user?.rol, PERMISOS_FRONT.ENTIDADES_ESCRIBIR);
 
     useEffect(() => {
         loadEntidades();

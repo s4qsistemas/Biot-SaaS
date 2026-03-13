@@ -10,12 +10,12 @@ import CatalogoModal from '../components/CatalogoModal';
 
 // 🛡️ IMPORTACIONES DE SEGURIDAD FRONTEND
 import { useAuth } from '../context/AuthContext';
-import { tienePermiso, PERMISOS } from '../config/permissions';
+import { tienePermiso, PERMISOS_FRONT } from '../config/permissions';
 
 const Catalogos = () => {
     const { user } = useAuth(); // Extraemos al usuario logueado
     // Calculamos si el usuario actual tiene la llave para escribir en catálogos
-    const puedeEscribir = tienePermiso(user?.rol, PERMISOS.CATALOGOS_ESCRIBIR);
+    const puedeEscribir = tienePermiso(user?.rol, PERMISOS_FRONT.CATALOGOS_ESCRIBIR);
 
     const [activeTab, setActiveTab] = useState('materiales');
     const [loading, setLoading] = useState(false);

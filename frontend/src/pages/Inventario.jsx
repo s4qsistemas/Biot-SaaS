@@ -5,7 +5,7 @@ import { Package, MapPin, Search, History, AlertTriangle, PlusCircle, MinusCircl
 import NuevoStockModal from '../components/NuevoStockModal';
 
 // 🛡️ IMPORTAMOS LA JAULA
-import { tienePermiso, PERMISOS } from '../config/permissions';
+import { tienePermiso, PERMISOS_FRONT } from '../config/permissions';
 
 const Inventario = () => {
     const [items, setItems] = useState([]);
@@ -23,8 +23,8 @@ const Inventario = () => {
     const { user } = useAuth();
 
     // 🛡️ PERMISOS CENTRALIZADOS
-    const puedeEditar = tienePermiso(user?.rol, PERMISOS.INVENTARIO_MOVER);
-    const puedeInicializar = tienePermiso(user?.rol, PERMISOS.INVENTARIO_INICIALIZAR);
+    const puedeEditar = tienePermiso(user?.rol, PERMISOS_FRONT.INVENTARIO_RESTAR);
+    const puedeInicializar = tienePermiso(user?.rol, PERMISOS_FRONT.INVENTARIO_SUMAR);
 
     useEffect(() => {
         cargarInventario();
