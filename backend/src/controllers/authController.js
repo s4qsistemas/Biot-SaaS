@@ -13,10 +13,13 @@ const login = async (req, res) => {
             include: { empresa: { include: { plan: true } } }
         });
 
-        if (!user || !user.activo) return res.status(401).json({ message: 'Credenciales inválidas o cuenta desactivada.' });
+        if (!user) return res.status(401).json({ message: 'Credenciales inválidas.' });
 
         const isMatch = await comparePassword(password, user.password);
         if (!isMatch) return res.status(401).json({ message: 'Credenciales inválidas.' });
+
+        // Credenciales correctas, ahora validamos estados
+        if (!user.activo) return res.status(403).json({ message: 'Tu cuenta de usuario ha sido desactivada.' });
 
         if (user.rol !== 'super_admin') {
             if (!user.empresa || !user.empresa.activo) return res.status(403).json({ message: 'El acceso para esta empresa ha sido suspendido.' });
