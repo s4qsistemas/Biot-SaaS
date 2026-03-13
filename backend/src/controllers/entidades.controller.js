@@ -5,7 +5,7 @@ const getEntidades = async (req, res) => {
     try {
         const tenant_id = req.user.tenant_id;
         const entidades = await prisma.entidad.findMany({
-            where: { tenant_id: tenant_id, activo: true },
+            where: { tenant_id: tenant_id },
             orderBy: { nombre: 'asc' }
         });
         res.json(entidades);
