@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PlusCircle, FileText, Trash2, Plus, Eye, Send, CheckCircle, XCircle, Pencil, Search } from 'lucide-react';
-import { getCotizaciones, createCotizacion, getCotizacionById, updateEstadoCotizacion, updateCotizacionCompleta } from '../services/cotizaciones.service';
+import { getCotizaciones, createCotizacion, getCotizacionById, updateEstadoCotizacion, updateCotizacionCompleta, deleteCotizacion } from '../services/cotizaciones.service';
 import { getMateriales, getOperarios, getEquipos } from '../services/catalogos.service';
 import api from '../utils/api';
 
@@ -307,6 +307,18 @@ const Cotizaciones = () => {
         }
     };
 
+    const handleEliminar = async (id) => {
+        if (!window.confirm("¿Estás seguro de que deseas eliminar este borrador? Esta acción no se puede deshacer.")) return;
+
+        try {
+            await deleteCotizacion(id);
+            cargarCotizaciones();
+        } catch (error) {
+            console.error("Error al eliminar cotización:", error);
+            alert("Error al eliminar: " + (error.response?.data?.message || "Revisa la consola"));
+        }
+    };
+
     return (
         <div className="space-y-6 p-6">
             <div className="flex justify-between items-center">
@@ -374,6 +386,13 @@ const Cotizaciones = () => {
                                             <button onClick={() => handleVerDetalle(cot.id)} className="text-txt-secondary hover:text-brand p-2 hover:bg-brand/10 rounded-lg transition-colors" title="Ver Detalle">
                                                 <Eye size={18} />
                                             </button>
+
+                                            {/* 🛡️ ELIMINAR: Solo borradores */}
+                                            {puedeEscribir && cot.estado === 'borrador' && (
+                                                <button onClick={() => handleEliminar(cot.id)} className="text-red-400 hover:text-red-300 p-2 hover:bg-red-500/10 rounded-lg transition-colors" title="Eliminar Borrador">
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))

@@ -12,5 +12,6 @@ router.post('/', authorize(PERMISOS.COTIZACIONES_ESCRIBIR), controller.createCot
 router.put('/:id', authorize(PERMISOS.COTIZACIONES_ESCRIBIR), controller.updateCotizacion);
 router.put('/:id/estado', authorize(PERMISOS.COTIZACIONES_ESCRIBIR), controller.updateEstado);
 router.post('/:id/enviar', authorize(PERMISOS.COTIZACIONES_ESCRIBIR), controller.enviarCotizacion);
+router.delete('/:id', authorize(PERMISOS.COTIZACIONES_ESCRIBIR), controller.deleteCotizacion);
 
 module.exports = router;

@@ -26,3 +26,9 @@ export const updateCotizacionCompleta = async (id, cotizacionData) => {
     const response = await api.put(`/api/cotizaciones/${id}`, cotizacionData);
     return response.data;
 };
+
+// Borra un borrador
+export const deleteCotizacion = async (id) => {
+    const response = await api.delete(`/api/cotizaciones/${id}`);
+    return response.data;
+};

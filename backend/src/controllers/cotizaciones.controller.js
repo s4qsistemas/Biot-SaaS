@@ -238,4 +238,29 @@ const previewCotizacion = async (req, res) => {
     }
 };
 
-module.exports = { getCotizaciones, getCotizacionById, createCotizacion, updateEstado, updateCotizacion, enviarCotizacion, previewCotizacion };
+const deleteCotizacion = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const tenant_id = req.user.tenant_id;
+
+        const cotizacion = await prisma.cotizacion.findFirst({
+            where: { id: parseInt(id), tenant_id }
+        });
+
+        if (!cotizacion) return res.status(404).json({ message: 'Cotización no encontrada' });
+        if (cotizacion.estado !== 'borrador') {
+            return res.status(403).json({ message: 'Solo se pueden eliminar cotizaciones en estado borrador.' });
+        }
+
+        await prisma.cotizacion.delete({
+            where: { id: parseInt(id) }
+        });
+
+        res.json({ message: 'Cotización eliminada correctamente' });
+    } catch (error) {
+        console.error("Error al eliminar cotización:", error);
+        res.status(500).json({ message: 'Error al eliminar la cotización' });
+    }
+};
+
+module.exports = { getCotizaciones, getCotizacionById, createCotizacion, updateEstado, updateCotizacion, enviarCotizacion, previewCotizacion, deleteCotizacion };
