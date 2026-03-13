@@ -431,7 +431,7 @@ const Cotizaciones = () => {
                                         <div key={index} className="flex gap-2 items-start bg-dark-bg p-3 rounded-lg border border-dark-border">
                                             <div className="flex-1 relative">
                                                 <div className="relative">
-                                                    <input type="text" placeholder="Descripción libre o busca en el catálogo..." className="w-full bg-dark-surface border border-dark-border rounded p-2 text-sm focus:border-brand outline-none pl-8" value={item.descripcion} onChange={(e) => handleDescripcionChange(index, e.target.value)} onFocus={() => { if (item.descripcion.length >= 2) setBusquedaActiva(index) }} onBlur={() => setTimeout(() => setBusquedaActiva(null), 200)} />
+                                                    <input type="text" placeholder="Descripción libre o busca en el catálogo..." className="w-full bg-dark-surface border border-dark-border rounded p-2 text-sm text-txt-primary focus:border-brand outline-none pl-8" value={item.descripcion} onChange={(e) => handleDescripcionChange(index, e.target.value)} onFocus={() => { if (item.descripcion.length >= 2) setBusquedaActiva(index) }} onBlur={() => setTimeout(() => setBusquedaActiva(null), 200)} />
                                                     <Search className="absolute left-2.5 top-2.5 text-txt-secondary" size={16} />
                                                 </div>
                                                 {busquedaActiva === index && sugerencias.length > 0 && (
@@ -447,8 +447,8 @@ const Cotizaciones = () => {
                                                     </ul>
                                                 )}
                                             </div>
-                                            <div className="w-24"><input type="number" min="0.1" step="0.1" placeholder="Cant." className="w-full bg-dark-surface border border-dark-border rounded p-2 text-sm focus:border-brand outline-none text-center" value={item.cantidad} onChange={(e) => handleItemChange(index, 'cantidad', e.target.value)} /></div>
-                                            <div className="w-32"><input type="number" min="0" placeholder="Precio Unit." className="w-full bg-dark-surface border border-dark-border rounded p-2 text-sm focus:border-brand outline-none text-right" value={item.unitario} onChange={(e) => handleItemChange(index, 'unitario', e.target.value)} /></div>
+                                            <div className="w-24"><input type="number" min="0.1" step="0.1" placeholder="Cant." className="w-full bg-dark-surface border border-dark-border rounded p-2 text-sm text-txt-primary focus:border-brand outline-none text-center" value={item.cantidad} onChange={(e) => handleItemChange(index, 'cantidad', e.target.value)} /></div>
+                                            <div className="w-32"><input type="number" min="0" placeholder="Precio Unit." className="w-full bg-dark-surface border border-dark-border rounded p-2 text-sm text-txt-primary focus:border-brand outline-none text-right" value={item.unitary} onChange={(e) => handleItemChange(index, 'unitario', e.target.value)} /></div>
                                             <div className="w-32 pt-2 text-right font-mono text-sm font-semibold text-white">${(Number(item.cantidad) * Number(item.unitario)).toLocaleString('es-CL')}</div>
                                             <button type="button" onClick={() => eliminarFila(index)} className={`p-2 rounded mt-0.5 transition-colors ${items.length === 1 ? 'text-dark-border cursor-not-allowed' : 'text-red-400 hover:bg-red-500/20'}`} disabled={items.length === 1}><Trash2 size={18} /></button>
                                         </div>
@@ -458,7 +458,7 @@ const Cotizaciones = () => {
                             <div className="flex flex-col md:flex-row gap-6 pt-4 border-t border-dark-border">
                                 <div className="flex-1">
                                     <label className="block text-xs font-medium text-txt-secondary mb-1">Observaciones</label>
-                                    <textarea className="w-full bg-dark-surface border border-dark-border rounded-lg p-2 text-sm focus:border-brand outline-none h-24 custom-scrollbar" placeholder="Términos y condiciones..." value={formData.observaciones} onChange={(e) => setFormData({ ...formData, observaciones: e.target.value })}></textarea>
+                                    <textarea className="w-full bg-dark-surface border border-dark-border rounded-lg p-2 text-sm text-txt-primary focus:border-brand outline-none h-24 custom-scrollbar" placeholder="Términos y condiciones..." value={formData.observaciones} onChange={(e) => setFormData({ ...formData, observaciones: e.target.value })}></textarea>
                                 </div>
                                 <div className="w-full md:w-64 bg-dark-bg p-4 rounded-xl border border-dark-border space-y-2">
                                     <div className="flex justify-between text-sm text-txt-secondary"><span>Neto:</span><span>${totales.neto.toLocaleString('es-CL')}</span></div>
