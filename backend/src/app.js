@@ -22,6 +22,7 @@ const cotizacionesRoutes = require('./routes/cotizaciones.routes');
 const ordenesTrabajoRoutes = require('./routes/ordenes_trabajo.routes');
 const superAdminRoutes = require('./routes/superAdminRoutes');
 const publicRoutes = require('./routes/publicRoutes');
+const dashboardRoutes = require('./routes/dashboard.routes');
 
 // --- Importar Middleware de Jaula ---
 const checkPasswordChange = require('./middleware/checkPasswordChange');
@@ -39,6 +40,7 @@ app.use('/api/entidades', authenticate, checkPasswordChange, entidadesRoutes);
 app.use('/api/cotizaciones', authenticate, checkPasswordChange, cotizacionesRoutes);
 app.use('/api/ordenes-trabajo', authenticate, checkPasswordChange, ordenesTrabajoRoutes);
 app.use('/api/superadmin', authenticate, checkPasswordChange, superAdminRoutes);
+app.use('/api/dashboard', authenticate, checkPasswordChange, dashboardRoutes);
 
 app.get('/', (req, res) => {
   res.json({ message: 'Biot SaaS API is running' });

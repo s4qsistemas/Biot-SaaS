@@ -1,9 +1,31 @@
+import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { getAdminMetrics } from '../services/dashboard.service';
 
 export default function AdminDashboard() {
     const { user } = useAuth();
-    const navigate = useNavigate(); // 👈 Inyectamos el navegador
+    const navigate = useNavigate();
+    const [metrics, setMetrics] = useState({
+        cotizacionesActivas: 0,
+        ordenesEnCurso: 0,
+        alertasInventario: 0
+    });
+    const [loadingMetrics, setLoadingMetrics] = useState(true);
+
+    useEffect(() => {
+        const fetchMetrics = async () => {
+            try {
+                const data = await getAdminMetrics();
+                setMetrics(data);
+            } catch (error) {
+                console.error("Error al cargar métricas:", error);
+            } finally {
+                setLoadingMetrics(false);
+            }
+        };
+        fetchMetrics();
+    }, []);
 
     return (
         <div className="p-6 md:p-10 font-sans text-txt-primary">
@@ -27,7 +49,9 @@ export default function AdminDashboard() {
                             <h3 className="text-txt-secondary text-sm font-medium">Cotizaciones Activas</h3>
                             <span className="text-brand text-xl">📄</span>
                         </div>
-                        <p className="text-4xl font-extrabold text-white">0</p>
+                        <p className="text-4xl font-extrabold text-white">
+                            {loadingMetrics ? '...' : metrics.cotizacionesActivas}
+                        </p>
                     </div>
 
                     <div
@@ -38,7 +62,9 @@ export default function AdminDashboard() {
                             <h3 className="text-txt-secondary text-sm font-medium">Órdenes en Curso (OT)</h3>
                             <span className="text-emerald-400 text-xl">⚙️</span>
                         </div>
-                        <p className="text-4xl font-extrabold text-white">0</p>
+                        <p className="text-4xl font-extrabold text-white">
+                            {loadingMetrics ? '...' : metrics.ordenesEnCurso}
+                        </p>
                     </div>
 
                     <div
@@ -49,7 +75,9 @@ export default function AdminDashboard() {
                             <h3 className="text-txt-secondary text-sm font-medium">Alertas de Inventario</h3>
                             <span className="text-red-400 text-xl">⚠️</span>
                         </div>
-                        <p className="text-4xl font-extrabold text-brand">0</p>
+                        <p className={`text-4xl font-extrabold ${metrics.alertasInventario > 0 ? 'text-red-400' : 'text-brand'}`}>
+                            {loadingMetrics ? '...' : metrics.alertasInventario}
+                        </p>
                     </div>
                 </div>
 
