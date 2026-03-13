@@ -133,6 +133,21 @@ const CatalogoModal = ({ isOpen, onClose, onSave, activeTab, itemToEdit }) => {
         if (processedData.stock_minimo) processedData.stock_minimo = Number(processedData.stock_minimo);
         if (processedData.valor_hora) processedData.valor_hora = Number(processedData.valor_hora);
 
+        // --- VALIDACIÓN DE PRECIOS (Solo para Materiales) ---
+        if (activeTab === 'materiales') {
+            const costo = processedData.precio_compra || 0;
+            const venta = processedData.precio_venta || 0;
+
+            if (costo <= 0) {
+                alert("El precio de costo debe ser mayor a cero.");
+                return;
+            }
+            if (venta < costo) {
+                alert("El precio de venta no puede ser menor al costo de adquisición.");
+                return;
+            }
+        }
+
         onSave(processedData);
     };
 

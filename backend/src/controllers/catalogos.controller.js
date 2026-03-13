@@ -23,6 +23,17 @@ const createMaterial = async (req, res) => {
         const tenant_id = req.user.tenant_id;
         const { codigo, nombre, tipo_medicion, unidad_base, permite_retazo, precio_compra, precio_venta, stock_minimo } = req.body;
 
+        // --- VALIDACIÓN DE PRECIOS ---
+        const costo = Number(precio_compra) || 0;
+        const venta = Number(precio_venta) || 0;
+
+        if (costo <= 0) {
+            return res.status(400).json({ message: 'El precio de costo debe ser mayor a cero' });
+        }
+        if (venta < costo) {
+            return res.status(400).json({ message: 'El precio de venta no puede ser menor al costo de adquisición' });
+        }
+
         const nuevo = await prisma.producto.create({
             data: { tenant_id, codigo, nombre, tipo_medicion, unidad_base, permite_retazo, precio_compra, precio_venta, stock_minimo }
         });
@@ -45,6 +56,17 @@ const updateMaterial = async (req, res) => {
         });
 
         if (!existe) return res.status(404).json({ message: 'Material no encontrado o acceso denegado' });
+
+        // --- VALIDACIÓN DE PRECIOS ---
+        const costo = Number(precio_compra) || 0;
+        const venta = Number(precio_venta) || 0;
+
+        if (costo <= 0) {
+            return res.status(400).json({ message: 'El precio de costo debe ser mayor a cero' });
+        }
+        if (venta < costo) {
+            return res.status(400).json({ message: 'El precio de venta no puede ser menor al costo de adquisición' });
+        }
 
         const actualizado = await prisma.producto.update({
             where: { id: parseInt(id) },
