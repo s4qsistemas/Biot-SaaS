@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Wrench, CheckCircle, Clock, AlertTriangle, FileText, Plus, Search, DollarSign, Activity, PackageMinus, ChevronDown } from 'lucide-react';
+import { Wrench, CheckCircle, Clock, AlertTriangle, FileText, Plus, Search, DollarSign, Activity, PackageMinus, ChevronDown, Trash2, X } from 'lucide-react';
 import api from '../utils/api';
 
 // 🛡️ IMPORTACIONES DE SEGURIDAD FRONTEND
@@ -185,6 +185,44 @@ const OrdenesTrabajo = () => {
         setActiveTab(puedeVerFinanzas ? 'resumen' : 'tareas');
     };
 
+    // Función auxiliar para actualizar la vista sin cerrar el modal
+    const refrescarOTSeleccionada = async () => {
+        const response = await api.get('/api/ordenes-trabajo');
+        setOrdenes(response.data);
+        if (selectedOT) {
+            setSelectedOT(response.data.find(o => o.id === selectedOT.id) || selectedOT);
+        }
+    };
+
+    // ==========================================
+    // 🛠️ ACCIONES DE EXTORNOS Y TAREAS
+    // ==========================================
+
+    const handleEliminarTarea = async (tarea) => {
+        if (!window.confirm(`¿Seguro que deseas eliminar la tarea "${tarea.nombre}"?`)) return;
+        try {
+            await api.delete(`/api/ordenes-trabajo/${selectedOT.id}/tareas/${tarea.id}`);
+            await refrescarOTSeleccionada();
+        } catch (error) { alert(error.response?.data?.message || "Error al eliminar la tarea."); }
+    };
+
+    const handleRevertirMaterial = async (tareaId, consumoId) => {
+        if (!window.confirm("¿Devolver este material a la bodega?")) return;
+        try {
+            await api.delete(`/api/ordenes-trabajo/${selectedOT.id}/tareas/${tareaId}/materiales/${consumoId}`);
+            await refrescarOTSeleccionada();
+            cargarInventarioBodega();
+        } catch (error) { alert(error.response?.data?.message || "Error al revertir material"); }
+    };
+
+    const handleRevertirHoras = async (tareaId, registroId) => {
+        if (!window.confirm("¿Eliminar este registro de horas?")) return;
+        try {
+            await api.delete(`/api/ordenes-trabajo/${selectedOT.id}/tareas/${tareaId}/horas/${registroId}`);
+            await refrescarOTSeleccionada();
+        } catch (error) { alert(error.response?.data?.message || "Error al revertir horas"); }
+    };
+
     const handleCrearOTDirecta = async (e) => {
         e.preventDefault();
         try {
@@ -203,9 +241,7 @@ const OrdenesTrabajo = () => {
         try {
             await api.post(`/api/ordenes-trabajo/${selectedOT.id}/tareas`, formDataTarea);
             setIsTareaModalOpen(false);
-            const response = await api.get('/api/ordenes-trabajo');
-            setOrdenes(response.data);
-            setSelectedOT(response.data.find(o => o.id === selectedOT.id) || selectedOT);
+            await refrescarOTSeleccionada();
         } catch (error) { alert("Error al crear la tarea: " + (error.response?.data?.message || "")); }
         finally { setIsSubmittingTarea(false); }
     };
@@ -220,10 +256,7 @@ const OrdenesTrabajo = () => {
             await api.post(`/api/ordenes-trabajo/${selectedOT.id}/tareas/${tareaSeleccionadaHoras.id}/horas`, payload);
             setIsHorasModalOpen(false);
             setFormHoras({ tipo_recurso: 'operario', recurso_id: '', horas: '', descripcion: '' });
-
-            const response = await api.get('/api/ordenes-trabajo');
-            setOrdenes(response.data);
-            setSelectedOT(response.data.find(o => o.id === selectedOT.id) || selectedOT);
+            await refrescarOTSeleccionada();
         } catch (error) { alert(error.response?.data?.message || "Error al registrar las horas"); }
     };
 
@@ -242,9 +275,7 @@ const OrdenesTrabajo = () => {
                 cantidad: formDataConsumo.cantidad
             });
             setIsCargarModalOpen(false);
-            const response = await api.get('/api/ordenes-trabajo');
-            setOrdenes(response.data);
-            setSelectedOT(response.data.find(o => o.id === selectedOT.id) || selectedOT);
+            await refrescarOTSeleccionada();
             cargarInventarioBodega();
         } catch (error) { alert(error.response?.data?.message || "Error consumiendo material"); }
         finally { setIsSubmittingConsumo(false); }
@@ -253,9 +284,7 @@ const OrdenesTrabajo = () => {
     const handleCambiarEstadoTarea = async (tarea, nuevoEstado, extras = {}) => {
         try {
             await api.patch(`/api/ordenes-trabajo/${selectedOT.id}/tareas/${tarea.id}/estado`, { estado: nuevoEstado, ...extras });
-            const response = await api.get('/api/ordenes-trabajo');
-            setOrdenes(response.data);
-            setSelectedOT(response.data.find(o => o.id === selectedOT.id) || selectedOT);
+            await refrescarOTSeleccionada();
         } catch (error) { alert("Error al cambiar estado: " + (error.response?.data?.message || "")); }
     };
 
@@ -265,9 +294,7 @@ const OrdenesTrabajo = () => {
             setIsPauseModalOpen(false);
             setMotivoPausa('');
             setTareaPausando(null);
-            const response = await api.get('/api/ordenes-trabajo');
-            setOrdenes(response.data);
-            setSelectedOT(response.data.find(o => o.id === selectedOT.id) || selectedOT);
+            await refrescarOTSeleccionada();
         } catch (error) { alert("Error al pausar: " + (error.response?.data?.message || "")); }
     };
 
@@ -280,9 +307,7 @@ const OrdenesTrabajo = () => {
         }
         try {
             await api.patch(`/api/ordenes-trabajo/${selectedOT.id}/estado`, { estado: nuevoEstado });
-            const response = await api.get('/api/ordenes-trabajo');
-            setOrdenes(response.data);
-            setSelectedOT(response.data.find(o => o.id === selectedOT.id) || selectedOT);
+            await refrescarOTSeleccionada();
         } catch (error) { alert("Error al cambiar estado OT: " + (error.response?.data?.message || "")); }
     };
 
@@ -360,7 +385,6 @@ const OrdenesTrabajo = () => {
                         <tbody className="divide-y divide-dark-border">
                             {otsFiltradas.map((ot) => (
                                 <tr key={ot.id} onClick={() => abrirPanelOT(ot)} className="hover:bg-dark-bg/30 transition-colors cursor-pointer group">
-                                    {/* 🛠️ CORRECCIÓN DE LA TABLA: Columna de Folio unificada */}
                                     <td className="p-4">
                                         <p className="font-bold text-brand group-hover:text-brand-hover">{ot.folio}</p>
                                         {(() => {
@@ -440,7 +464,7 @@ const OrdenesTrabajo = () => {
                 </div>
             </div>
 
-            {/* 🛠️ CORRECCIÓN DEL SCROLL: Nuevas clases en los contenedores del modal */}
+            {/* PANEL DETALLE OT */}
             {selectedOT && (
                 <div className="fixed inset-0 z-[60] flex justify-center bg-black/80 backdrop-blur-sm p-4 py-10 animate-fadeIn overflow-y-auto">
                     <div className="bg-dark-surface border border-dark-border w-full max-w-6xl h-max my-auto rounded-xl shadow-2xl flex flex-col">
@@ -503,7 +527,6 @@ const OrdenesTrabajo = () => {
                             )}
                         </div>
 
-                        {/* 🛠️ CORRECCIÓN DEL SCROLL: Ajustamos el cuerpo dinámico del modal */}
                         <div className="p-6 bg-dark-surface rounded-b-xl">
 
                             {/* PESTAÑA RESUMEN */}
@@ -631,148 +654,195 @@ const OrdenesTrabajo = () => {
                                         </div>
                                     ) : (
                                         <div className="space-y-3">
-                                            {selectedOT.tareas?.map(tarea => (
-                                                <div key={tarea.id} className="bg-dark-bg border border-dark-border rounded-lg overflow-hidden transition-colors shadow-sm">
-                                                    <div className="p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:bg-dark-surface/50">
-                                                        <div className="flex items-start gap-3 w-full md:w-auto">
-                                                            <button onClick={() => toggleTask(tarea.id)} className="text-txt-secondary hover:text-brand bg-dark-surface border border-dark-border p-1.5 rounded transition-colors mt-0.5">
-                                                                {expandedTasks[tarea.id] ? <ChevronDown size={16} className="rotate-180" /> : <ChevronDown size={16} />}
-                                                            </button>
-                                                            <div className="flex flex-col">
-                                                                <h5 className="font-bold text-white text-sm">{tarea.nombre}</h5>
-                                                                <div className="flex flex-wrap items-center gap-2 mt-1.5">
-                                                                    <span className="text-[10px] text-txt-secondary font-mono bg-dark-surface border border-dark-border px-1.5 py-0.5 rounded">{tarea.tipo}</span>
+                                            {selectedOT.tareas?.map(tarea => {
+                                                const tieneCostos = tarea.consumo_ot?.length > 0 || tarea.registro_tiempo?.length > 0;
 
-                                                                    {puedeOperarTaller && selectedOT.estado === 'en_proceso' && tarea.estado === 'pendiente' && (<button onClick={(e) => { e.stopPropagation(); handleCambiarEstadoTarea(tarea, 'en_proceso'); }} className="text-[10px] bg-blue-500/10 hover:bg-blue-500 text-blue-400 hover:text-white border border-blue-500/30 px-2 py-0.5 rounded transition-colors uppercase font-bold">▶️ Iniciar</button>)}
-                                                                    {puedeOperarTaller && selectedOT.estado === 'en_proceso' && tarea.estado === 'en_proceso' && (<>
-                                                                        <button onClick={(e) => { e.stopPropagation(); setTareaPausando(tarea); setIsPauseModalOpen(true); }} className="text-[10px] bg-orange-500/10 hover:bg-orange-500 text-orange-400 hover:text-white border border-orange-500/30 px-2 py-0.5 rounded transition-colors uppercase font-bold">⏸️ Pausar</button>
-                                                                        <button onClick={(e) => { e.stopPropagation(); handleCambiarEstadoTarea(tarea, 'completada'); }} className="text-[10px] bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-white border border-emerald-500/30 px-2 py-0.5 rounded transition-colors uppercase font-bold">✅ Finalizar</button>
-                                                                    </>)}
-                                                                    {puedeOperarTaller && selectedOT.estado === 'en_proceso' && tarea.estado === 'pausada' && (<>
-                                                                        <button onClick={(e) => { e.stopPropagation(); handleCambiarEstadoTarea(tarea, 'en_proceso'); }} className="text-[10px] bg-blue-500/10 hover:bg-blue-500 text-blue-400 hover:text-white border border-blue-500/30 px-2 py-0.5 rounded transition-colors uppercase font-bold">▶️ Reanudar</button>
-                                                                    </>)}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex items-center gap-3 self-end md:self-auto w-full md:w-auto justify-end">
-                                                            <span className={`text-[10px] uppercase font-bold px-2.5 py-1 rounded border ${tarea.estado === 'completada' ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' : tarea.estado === 'pausada' ? 'text-orange-400 border-orange-500/30 bg-orange-500/10' : tarea.estado === 'en_proceso' ? 'text-amber-400 border-amber-500/30 bg-amber-500/10 animate-pulse' : 'text-blue-400 border-blue-500/30 bg-blue-500/10'}`}>
-                                                                {tarea.estado}
-                                                            </span>
+                                                return (
+                                                    <div key={tarea.id} className="bg-dark-bg border border-dark-border rounded-lg overflow-hidden transition-colors shadow-sm">
+                                                        <div className="p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:bg-dark-surface/50">
+                                                            <div className="flex items-start gap-3 w-full md:w-auto">
+                                                                <button onClick={() => toggleTask(tarea.id)} className="text-txt-secondary hover:text-brand bg-dark-surface border border-dark-border p-1.5 rounded transition-colors mt-0.5">
+                                                                    {expandedTasks[tarea.id] ? <ChevronDown size={16} className="rotate-180" /> : <ChevronDown size={16} />}
+                                                                </button>
+                                                                <div className="flex flex-col">
 
-                                                            {puedeOperarTaller && !['entregada', 'facturada'].includes(selectedOT.estado) && (
-                                                                <>
-                                                                    <button onClick={() => { setTareaSeleccionadaHoras(tarea); setIsHorasModalOpen(true); }} className="bg-dark-surface border border-blue-500/50 hover:bg-blue-500 text-blue-400 hover:text-white px-3 py-1.5 rounded text-xs transition-colors font-medium flex items-center gap-2">⏱️ Cargar HH</button>
-                                                                    <button onClick={() => abrirModalConsumo(tarea)} className="bg-dark-surface border border-brand/50 hover:bg-brand text-brand hover:text-white px-3 py-1.5 rounded text-xs transition-colors font-medium flex items-center gap-2"><PackageMinus size={14} /> Material</button>
-                                                                </>
-                                                            )}
-                                                        </div>
-                                                    </div>
-
-                                                    {expandedTasks[tarea.id] && (
-                                                        <div className="bg-dark-surface border-t border-dark-border p-5 animate-fadeIn">
-                                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-                                                                <div>
-                                                                    <h6 className="text-[10px] font-bold text-txt-secondary uppercase mb-3 border-b border-dark-border pb-1">📦 Bodega Consumida</h6>
-                                                                    {!tarea.consumo_ot?.length ? (<p className="text-xs text-slate-500 italic">Nada consumido aún.</p>) : (
-                                                                        <ul className="space-y-2">
-                                                                            {tarea.consumo_ot.map(c => (
-                                                                                <li key={c.id} className="text-xs flex flex-col gap-1 border-l-2 border-brand/30 pl-2">
-                                                                                    <div className="flex justify-between text-slate-300">
-                                                                                        <span>{Number(c.cantidad_utilizada)}x {c.unidad_stock?.producto?.nombre}</span>
-                                                                                        {puedeVerFinanzas && (<span className="text-brand font-mono font-bold">${(Number(c.cantidad_utilizada) * Number(c.unidad_stock?.producto?.precio_compra || 0)).toLocaleString('es-CL')}</span>)}
-                                                                                    </div>
-                                                                                    <span className="text-[10px] text-txt-secondary font-mono">{c.unidad_stock?.producto?.codigo}</span>
-                                                                                </li>
-                                                                            ))}
-                                                                        </ul>
-                                                                    )}
-                                                                </div>
-
-                                                                <div>
-                                                                    <h6 className="text-[10px] font-bold text-txt-secondary uppercase mb-3 border-b border-dark-border pb-1">⏱️ Horas (HH/HM) Inyectadas</h6>
-                                                                    {!tarea.registro_tiempo?.length ? (<p className="text-xs text-slate-500 italic">Sin registros de tiempo.</p>) : (
-                                                                        <ul className="space-y-2">
-                                                                            {tarea.registro_tiempo.map(t => (
-                                                                                <li key={t.id} className="text-xs flex flex-col gap-1 border-l-2 border-emerald-500/30 pl-2">
-                                                                                    <div className="flex justify-between text-slate-300">
-                                                                                        <span><span className="font-bold">{Number(t.horas)}h</span> - {t.operario_id ? t.operario?.nombre : t.equipo?.nombre}</span>
-                                                                                        {puedeVerFinanzas && (<span className="text-amber-400 font-mono font-bold">${Number(t.costo_total).toLocaleString('es-CL')}</span>)}
-                                                                                    </div>
-                                                                                    {t.descripcion && <span className="text-[10px] text-txt-secondary italic">"{t.descripcion}"</span>}
-                                                                                </li>
-                                                                            ))}
-                                                                        </ul>
-                                                                    )}
-                                                                </div>
-
-                                                                        <div className="bg-dark-bg p-4 rounded-lg border border-dark-border shadow-inner">
-                                                                    <h6 className="text-[10px] font-bold text-blue-400 uppercase mb-3 border-b border-dark-border pb-1 flex items-center gap-1">
-                                                                        <Clock size={12} /> Cronómetro Operativo
-                                                                    </h6>
-                                                                    <div className="space-y-3">
-                                                                        <div className="flex justify-between items-center">
-                                                                            <span className="text-[10px] text-txt-secondary uppercase">Inicio:</span>
-                                                                            <span className="text-xs text-white font-mono">{tarea.fecha_inicio_real ? new Date(tarea.fecha_inicio_real).toLocaleString('es-CL') : <span className="text-slate-500 italic">No iniciada</span>}</span>
-                                                                        </div>
-                                                                        <div className="flex justify-between items-center">
-                                                                            <span className="text-[10px] text-txt-secondary uppercase">Fin:</span>
-                                                                            <span className="text-xs text-white font-mono">{tarea.fecha_fin_real ? new Date(tarea.fecha_fin_real).toLocaleString('es-CL') : <span className="text-slate-500 italic">Pendiente</span>}</span>
-                                                                        </div>
-
-                                                                        {tarea.fecha_inicio_real && tarea.fecha_fin_real && (() => {
-                                                                            const tiempoTotalMs = new Date(tarea.fecha_fin_real) - new Date(tarea.fecha_inicio_real);
-                                                                            const tiempoPausadoMs = (tarea.pausas_tarea || []).reduce((acc, p) => p.fecha_reanudacion ? acc + (new Date(p.fecha_reanudacion) - new Date(p.fecha_pausa)) : acc, 0);
-                                                                            const horasRelojTotales = (tiempoTotalMs - tiempoPausadoMs) / 3600000;
-
-                                                                            let horasHabilesEfectivas = calcularHorasEfectivas(tarea.fecha_inicio_real, tarea.fecha_fin_real, selectedOT.horario_programado);
-                                                                            horasHabilesEfectivas = Math.max(0, horasHabilesEfectivas - (tiempoPausadoMs / 3600000));
-
-                                                                            return (
-                                                                                <div className="pt-3 mt-3 border-t border-dark-border space-y-2">
-                                                                                    <div className="flex justify-between items-center text-[10px] text-txt-secondary">
-                                                                                        <span className="uppercase">Tiempo Reloj (24/7):</span>
-                                                                                        <span className="font-mono">{horasRelojTotales.toFixed(1)}h</span>
-                                                                                    </div>
-                                                                                    <div className="flex justify-between items-center text-xs font-bold bg-blue-500/10 p-2 rounded border border-blue-500/20">
-                                                                                        <span className="text-[10px] text-blue-400 uppercase">Tiempo Real (Hábil):</span>
-                                                                                        <span className="text-blue-400 font-mono text-sm">{horasHabilesEfectivas.toFixed(1)}h</span>
-                                                                                    </div>
-                                                                                </div>
-                                                                            );
-                                                                        })()}
+                                                                    <div className="flex items-center gap-2">
+                                                                        <h5 className="font-bold text-white text-sm">{tarea.nombre}</h5>
+                                                                        {/* 🧠 ELIMINAR TAREA (Condicional) */}
+                                                                        {puedeOperarTaller && tarea.estado === 'pendiente' && (
+                                                                            <div className="flex ml-2 border-l border-dark-border pl-2">
+                                                                                {!tieneCostos ? (
+                                                                                    <button onClick={() => handleEliminarTarea(tarea)} className="text-txt-secondary hover:text-red-400 transition-colors" title="Eliminar tarea vacía">
+                                                                                        <Trash2 size={14} />
+                                                                                    </button>
+                                                                                ) : (
+                                                                                    <button disabled className="text-dark-border cursor-not-allowed" title="No se puede borrar: Ya tiene materiales o tiempos descontados">
+                                                                                        <Trash2 size={14} />
+                                                                                    </button>
+                                                                                )}
+                                                                            </div>
+                                                                        )}
                                                                     </div>
 
-                                                                    {/* NUEVO: HISTORIAL DE PAUSAS Y JUSTIFICACIONES */}
-                                                                    {tarea.pausas_tarea?.length > 0 && (
-                                                                        <div className="mt-4 pt-4 border-t border-dark-border">
-                                                                            <div className="flex items-center gap-1.5 mb-2">
-                                                                                <span className="text-[10px] font-bold text-orange-400 uppercase">🚩 Historial de Pausas</span>
-                                                                                <span className="text-[10px] bg-orange-500/10 text-orange-400 px-1 rounded-full">{tarea.pausas_tarea.length}</span>
-                                                                            </div>
-                                                                            <div className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar pr-1">
-                                                                                {tarea.pausas_tarea.map((p, idx) => (
-                                                                                    <div key={idx} className="bg-dark-bg/50 border border-orange-500/10 p-2 rounded text-[10px] flex flex-col gap-1">
-                                                                                        <div className="flex justify-between items-center text-txt-secondary">
-                                                                                            <span>{new Date(p.fecha_pausa).toLocaleString('es-CL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
-                                                                                            {p.fecha_reanudacion ? (
-                                                                                                <span className="text-emerald-500">Reanudada: {new Date(p.fecha_reanudacion).toLocaleString('es-CL', { hour: '2-digit', minute: '2-digit' })}</span>
-                                                                                            ) : (
-                                                                                                <span className="text-orange-500 font-bold animate-pulse">En curso</span>
-                                                                                            )}
-                                                                                        </div>
-                                                                                        <p className="text-white italic">"{p.motivo}"</p>
-                                                                                    </div>
-                                                                                ))}
-                                                                            </div>
-                                                                        </div>
-                                                                    )}
+                                                                    <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                                                                        <span className="text-[10px] text-txt-secondary font-mono bg-dark-surface border border-dark-border px-1.5 py-0.5 rounded">{tarea.tipo}</span>
+
+                                                                        {puedeOperarTaller && selectedOT.estado === 'en_proceso' && tarea.estado === 'pendiente' && (<button onClick={(e) => { e.stopPropagation(); handleCambiarEstadoTarea(tarea, 'en_proceso'); }} className="text-[10px] bg-blue-500/10 hover:bg-blue-500 text-blue-400 hover:text-white border border-blue-500/30 px-2 py-0.5 rounded transition-colors uppercase font-bold">▶️ Iniciar</button>)}
+                                                                        {puedeOperarTaller && selectedOT.estado === 'en_proceso' && tarea.estado === 'en_proceso' && (<>
+                                                                            <button onClick={(e) => { e.stopPropagation(); setTareaPausando(tarea); setIsPauseModalOpen(true); }} className="text-[10px] bg-orange-500/10 hover:bg-orange-500 text-orange-400 hover:text-white border border-orange-500/30 px-2 py-0.5 rounded transition-colors uppercase font-bold">⏸️ Pausar</button>
+                                                                            <button onClick={(e) => { e.stopPropagation(); handleCambiarEstadoTarea(tarea, 'completada'); }} className="text-[10px] bg-emerald-500/10 hover:bg-emerald-500 text-emerald-400 hover:text-white border border-emerald-500/30 px-2 py-0.5 rounded transition-colors uppercase font-bold">✅ Finalizar</button>
+                                                                        </>)}
+                                                                        {puedeOperarTaller && selectedOT.estado === 'en_proceso' && tarea.estado === 'pausada' && (<>
+                                                                            <button onClick={(e) => { e.stopPropagation(); handleCambiarEstadoTarea(tarea, 'en_proceso'); }} className="text-[10px] bg-blue-500/10 hover:bg-blue-500 text-blue-400 hover:text-white border border-blue-500/30 px-2 py-0.5 rounded transition-colors uppercase font-bold">▶️ Reanudar</button>
+                                                                        </>)}
+                                                                    </div>
                                                                 </div>
                                                             </div>
+                                                            <div className="flex items-center gap-3 self-end md:self-auto w-full md:w-auto justify-end">
+                                                                <span className={`text-[10px] uppercase font-bold px-2.5 py-1 rounded border ${tarea.estado === 'completada' ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' : tarea.estado === 'pausada' ? 'text-orange-400 border-orange-500/30 bg-orange-500/10' : tarea.estado === 'en_proceso' ? 'text-amber-400 border-amber-500/30 bg-amber-500/10 animate-pulse' : 'text-blue-400 border-blue-500/30 bg-blue-500/10'}`}>
+                                                                    {tarea.estado}
+                                                                </span>
+
+                                                                {puedeOperarTaller && !['entregada', 'facturada'].includes(selectedOT.estado) && (
+                                                                    <>
+                                                                        <button onClick={() => { setTareaSeleccionadaHoras(tarea); setIsHorasModalOpen(true); }} className="bg-dark-surface border border-blue-500/50 hover:bg-blue-500 text-blue-400 hover:text-white px-3 py-1.5 rounded text-xs transition-colors font-medium flex items-center gap-2">⏱️ Cargar HH</button>
+                                                                        <button onClick={() => abrirModalConsumo(tarea)} className="bg-dark-surface border border-brand/50 hover:bg-brand text-brand hover:text-white px-3 py-1.5 rounded text-xs transition-colors font-medium flex items-center gap-2"><PackageMinus size={14} /> Material</button>
+                                                                    </>
+                                                                )}
+                                                            </div>
                                                         </div>
-                                                    )}
-                                                </div>
-                                            ))}
+
+                                                        {expandedTasks[tarea.id] && (
+                                                            <div className="bg-dark-surface border-t border-dark-border p-5 animate-fadeIn">
+                                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                                                                    {/* 📦 BODEGA CONSUMIDA CON EXTORNO */}
+                                                                    <div>
+                                                                        <h6 className="text-[10px] font-bold text-txt-secondary uppercase mb-3 border-b border-dark-border pb-1">📦 Bodega Consumida</h6>
+                                                                        {!tarea.consumo_ot?.length ? (<p className="text-xs text-slate-500 italic">Nada consumido aún.</p>) : (
+                                                                            <ul className="space-y-2">
+                                                                                {tarea.consumo_ot.map(c => (
+                                                                                    <li key={c.id} className="text-xs flex flex-col gap-1 border-l-2 border-brand/30 pl-2 group">
+                                                                                        <div className="flex justify-between items-center text-slate-300">
+                                                                                            <span>{Number(c.cantidad_utilizada)}x {c.unidad_stock?.producto?.nombre}</span>
+
+                                                                                            <div className="flex items-center gap-2">
+                                                                                                {puedeVerFinanzas && (<span className="text-brand font-mono font-bold">${(Number(c.cantidad_utilizada) * Number(c.unidad_stock?.producto?.precio_compra || 0)).toLocaleString('es-CL')}</span>)}
+
+                                                                                                {/* 🧠 BOTÓN EXTORNO MATERIAL */}
+                                                                                                {puedeOperarTaller && !['entregada', 'facturada'].includes(selectedOT.estado) && (
+                                                                                                    <button onClick={() => handleRevertirMaterial(tarea.id, c.id)} className="text-red-500/50 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all" title="Devolver a inventario">
+                                                                                                        <X size={14} />
+                                                                                                    </button>
+                                                                                                )}
+                                                                                            </div>
+                                                                                        </div>
+                                                                                        <span className="text-[10px] text-txt-secondary font-mono">{c.unidad_stock?.producto?.codigo}</span>
+                                                                                    </li>
+                                                                                ))}
+                                                                            </ul>
+                                                                        )}
+                                                                    </div>
+
+                                                                    {/* ⏱️ HORAS INYECTADAS CON EXTORNO */}
+                                                                    <div>
+                                                                        <h6 className="text-[10px] font-bold text-txt-secondary uppercase mb-3 border-b border-dark-border pb-1">⏱️ Horas (HH/HM) Inyectadas</h6>
+                                                                        {!tarea.registro_tiempo?.length ? (<p className="text-xs text-slate-500 italic">Sin registros de tiempo.</p>) : (
+                                                                            <ul className="space-y-2">
+                                                                                {tarea.registro_tiempo.map(t => (
+                                                                                    <li key={t.id} className="text-xs flex flex-col gap-1 border-l-2 border-emerald-500/30 pl-2 group">
+                                                                                        <div className="flex justify-between items-center text-slate-300">
+                                                                                            <span><span className="font-bold">{Number(t.horas)}h</span> - {t.operario_id ? t.operario?.nombre : t.equipo?.nombre}</span>
+
+                                                                                            <div className="flex items-center gap-2">
+                                                                                                {puedeVerFinanzas && (<span className="text-amber-400 font-mono font-bold">${Number(t.costo_total).toLocaleString('es-CL')}</span>)}
+
+                                                                                                {/* 🧠 BOTÓN EXTORNO HORAS */}
+                                                                                                {puedeOperarTaller && !['entregada', 'facturada'].includes(selectedOT.estado) && (
+                                                                                                    <button onClick={() => handleRevertirHoras(tarea.id, t.id)} className="text-red-500/50 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all" title="Eliminar horas cargadas">
+                                                                                                        <X size={14} />
+                                                                                                    </button>
+                                                                                                )}
+                                                                                            </div>
+                                                                                        </div>
+                                                                                        {t.descripcion && <span className="text-[10px] text-txt-secondary italic">"{t.descripcion}"</span>}
+                                                                                    </li>
+                                                                                ))}
+                                                                            </ul>
+                                                                        )}
+                                                                    </div>
+
+                                                                    <div className="bg-dark-bg p-4 rounded-lg border border-dark-border shadow-inner">
+                                                                        <h6 className="text-[10px] font-bold text-blue-400 uppercase mb-3 border-b border-dark-border pb-1 flex items-center gap-1">
+                                                                            <Clock size={12} /> Cronómetro Operativo
+                                                                        </h6>
+                                                                        <div className="space-y-3">
+                                                                            <div className="flex justify-between items-center">
+                                                                                <span className="text-[10px] text-txt-secondary uppercase">Inicio:</span>
+                                                                                <span className="text-xs text-white font-mono">{tarea.fecha_inicio_real ? new Date(tarea.fecha_inicio_real).toLocaleString('es-CL') : <span className="text-slate-500 italic">No iniciada</span>}</span>
+                                                                            </div>
+                                                                            <div className="flex justify-between items-center">
+                                                                                <span className="text-[10px] text-txt-secondary uppercase">Fin:</span>
+                                                                                <span className="text-xs text-white font-mono">{tarea.fecha_fin_real ? new Date(tarea.fecha_fin_real).toLocaleString('es-CL') : <span className="text-slate-500 italic">Pendiente</span>}</span>
+                                                                            </div>
+
+                                                                            {tarea.fecha_inicio_real && tarea.fecha_fin_real && (() => {
+                                                                                const tiempoTotalMs = new Date(tarea.fecha_fin_real) - new Date(tarea.fecha_inicio_real);
+                                                                                const tiempoPausadoMs = (tarea.pausas_tarea || []).reduce((acc, p) => p.fecha_reanudacion ? acc + (new Date(p.fecha_reanudacion) - new Date(p.fecha_pausa)) : acc, 0);
+
+                                                                                // Horas de reloj bruto (Calendario 24/7)
+                                                                                const horasRelojTotales = (tiempoTotalMs - tiempoPausadoMs) / 3600000;
+
+                                                                                // 🧠 Horas Hábiles (Cruzadas con el JSON de la OT)
+                                                                                let horasHabilesEfectivas = calcularHorasEfectivas(tarea.fecha_inicio_real, tarea.fecha_fin_real, selectedOT.horario_programado);
+
+                                                                                horasHabilesEfectivas = Math.max(0, horasHabilesEfectivas - (tiempoPausadoMs / 3600000));
+
+                                                                                return (
+                                                                                    <div className="pt-3 mt-3 border-t border-dark-border space-y-2">
+                                                                                        <div className="flex justify-between items-center text-[10px] text-txt-secondary">
+                                                                                            <span className="uppercase">Tiempo Reloj (24/7):</span>
+                                                                                            <span className="font-mono">{horasRelojTotales.toFixed(1)}h</span>
+                                                                                        </div>
+                                                                                        <div className="flex justify-between items-center text-xs font-bold bg-blue-500/10 p-2 rounded border border-blue-500/20">
+                                                                                            <span className="text-[10px] text-blue-400 uppercase">Tiempo Real (Hábil):</span>
+                                                                                            <span className="text-blue-400 font-mono text-sm">{horasHabilesEfectivas.toFixed(1)}h</span>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                );
+                                                                            })()}
+                                                                        </div>
+
+                                                                        {tarea.pausas_tarea?.length > 0 && (
+                                                                            <div className="mt-4 pt-4 border-t border-dark-border">
+                                                                                <div className="flex items-center gap-1.5 mb-2">
+                                                                                    <span className="text-[10px] font-bold text-orange-400 uppercase">🚩 Historial de Pausas</span>
+                                                                                    <span className="text-[10px] bg-orange-500/10 text-orange-400 px-1 rounded-full">{tarea.pausas_tarea.length}</span>
+                                                                                </div>
+                                                                                <div className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar pr-1">
+                                                                                    {tarea.pausas_tarea.map((p, idx) => (
+                                                                                        <div key={idx} className="bg-dark-bg/50 border border-orange-500/10 p-2 rounded text-[10px] flex flex-col gap-1">
+                                                                                            <div className="flex justify-between items-center text-txt-secondary">
+                                                                                                <span>{new Date(p.fecha_pausa).toLocaleString('es-CL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+                                                                                                {p.fecha_reanudacion ? (
+                                                                                                    <span className="text-emerald-500">Reanudada: {new Date(p.fecha_reanudacion).toLocaleString('es-CL', { hour: '2-digit', minute: '2-digit' })}</span>
+                                                                                                ) : (
+                                                                                                    <span className="text-orange-500 font-bold animate-pulse">En curso</span>
+                                                                                                )}
+                                                                                            </div>
+                                                                                            <p className="text-white italic">"{p.motivo}"</p>
+                                                                                        </div>
+                                                                                    ))}
+                                                                                </div>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     )}
                                 </div>

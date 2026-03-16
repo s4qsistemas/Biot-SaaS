@@ -369,4 +369,100 @@ const actualizarHorarioOT = async (req, res) => {
     }
 };
 
-module.exports = { getOrdenesTrabajo, createTarea, cargarMaterial, cargarHoras, actualizarEstadoTarea, createOTDirecta, actualizarEstadoOT, enviarOT, getCorreosInternos, actualizarHorarioOT };
+// 1. ELIMINAR TAREA (Solo si está limpia)
+const eliminarTarea = async (req, res) => {
+    try {
+        const { tareaId } = req.params;
+
+        // 👇 Corrección 1: prisma.tarea (No tareaOT)
+        const tarea = await prisma.tarea.findUnique({
+            where: { id: parseInt(tareaId) },
+            include: { consumo_ot: true, registro_tiempo: true }
+        });
+
+        if (!tarea) return res.status(404).json({ message: 'Tarea no encontrada.' });
+        if (tarea.estado !== 'pendiente') return res.status(400).json({ message: 'No se puede eliminar una tarea que ya inició.' });
+        if (tarea.consumo_ot.length > 0 || tarea.registro_tiempo.length > 0) {
+            return res.status(400).json({ message: 'No se puede eliminar: Tiene materiales o tiempos cargados.' });
+        }
+
+        // 👇 Corrección 2: prisma.tarea (No tareaOT)
+        await prisma.tarea.delete({ where: { id: parseInt(tareaId) } });
+        res.json({ message: 'Tarea eliminada correctamente.' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error al eliminar tarea.' });
+    }
+};
+
+// 2. EXTORNO DE MATERIAL (Devuelve a bodega y registra el historial)
+const revertirMaterial = async (req, res) => {
+    try {
+        const { id, tareaId, consumoId } = req.params;
+
+        // 1. Buscamos el consumo y traemos la info de la OT para dejar un historial claro
+        const consumo = await prisma.consumoOt.findUnique({
+            where: { id: parseInt(consumoId) },
+            include: {
+                tarea: {
+                    include: { orden_trabajo: true }
+                }
+            }
+        });
+
+        if (!consumo) return res.status(404).json({ message: 'Registro de consumo no encontrado.' });
+
+        const folioOT = consumo.tarea?.orden_trabajo?.folio || 'Sin Folio';
+        const nombreTarea = consumo.tarea?.nombre || 'Tarea Desconocida';
+
+        // 2. Transacción: Borrar costo, devolver físico y CREAR RASTRO DE AUDITORÍA
+        await prisma.$transaction([
+            // Paso A: Borrar el registro del costo en la OT
+            prisma.consumoOt.delete({ where: { id: parseInt(consumoId) } }),
+
+            // Paso B: Devolver el stock físico a la bodega
+            prisma.unidadStock.update({
+                where: { id: consumo.unidad_stock_id },
+                data: { cantidad_disponible: { increment: consumo.cantidad_utilizada } }
+            }),
+
+            // 🧠 Paso C: El Estándar ERP -> Inyectar la devolución en el historial de Movimientos
+            prisma.movimiento.create({
+                data: {
+                    tenant_id: req.user.tenant_id,
+                    unidad_stock_id: consumo.unidad_stock_id,
+                    usuario_id: req.user.id,
+                    tipo: 'ENTRADA',
+                    cantidad_movida: consumo.cantidad_utilizada,
+                    referencia_tipo: 'EXTORNO_OT',
+                    referencia_id: parseInt(tareaId),
+                    motivo: `Extorno / Devolución de ${folioOT}, Tarea: ${nombreTarea}`
+                }
+            })
+        ]);
+
+        res.json({ message: 'Material devuelto a bodega exitosamente.' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error al revertir material y registrar movimiento.' });
+    }
+};
+
+// 3. EXTORNO DE HORAS
+const revertirHoras = async (req, res) => {
+    try {
+        const { id, tareaId, registroId } = req.params;
+
+        // 👇 AQUI ESTÁ LA MAGIA: Debe ser estrictamente prisma.registroTiempo
+        await prisma.registroTiempo.delete({
+            where: { id: parseInt(registroId) }
+        });
+
+        res.json({ message: 'Registro de horas eliminado exitosamente.' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error al revertir horas.' });
+    }
+};
+
+module.exports = { getOrdenesTrabajo, createTarea, cargarMaterial, cargarHoras, actualizarEstadoTarea, createOTDirecta, actualizarEstadoOT, enviarOT, getCorreosInternos, actualizarHorarioOT, eliminarTarea, revertirMaterial, revertirHoras };
