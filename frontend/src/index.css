@@ -1,3 +1,32 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ==========================================
+   CUSTOM SCROLLBAR (Dark Theme)
+   ========================================== */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #374151;
+    /* Gris oscuro */
+    border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #4b5563;
+    /* Gris un poco más claro al pasar el mouse */
+}
+
+/* Para Firefox */
+.custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #374151 transparent;
+}

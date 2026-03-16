@@ -15,5 +15,6 @@ router.post('/:id/enviar', authorize(PERMISOS.OT_OPERACION_TALLER), controller.e
 router.patch('/:id/tareas/:tareaId/estado', authorize(PERMISOS.OT_OPERACION_TALLER), controller.actualizarEstadoTarea);
 
 router.patch('/:id/estado', authorize(PERMISOS.OT_GESTION_MAESTRA), controller.actualizarEstadoOT);
+router.patch('/:id/horario', authorize(PERMISOS.OT_GESTION_MAESTRA), controller.actualizarHorarioOT);
 
 module.exports = router;

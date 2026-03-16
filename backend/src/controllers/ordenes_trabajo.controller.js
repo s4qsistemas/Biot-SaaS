@@ -345,4 +345,28 @@ const getCorreosInternos = async (req, res) => {
     }
 };
 
-module.exports = { getOrdenesTrabajo, createTarea, cargarMaterial, cargarHoras, actualizarEstadoTarea, createOTDirecta, actualizarEstadoOT, enviarOT, getCorreosInternos };
+const actualizarHorarioOT = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { horario_programado } = req.body;
+
+        // Asegurarnos de que la OT pertenece al Tenant
+        const ot = await prisma.ordenTrabajo.findFirst({
+            where: { id: parseInt(id), tenant_id: req.user.tenant_id }
+        });
+
+        if (!ot) return res.status(404).json({ message: 'OT no encontrada.' });
+
+        await prisma.ordenTrabajo.update({
+            where: { id: parseInt(id) },
+            data: { horario_programado } // Guardamos el JSON directamente
+        });
+
+        res.json({ message: 'Horario actualizado correctamente.' });
+    } catch (error) {
+        console.error("Error al actualizar horario de OT:", error);
+        res.status(500).json({ message: 'Error interno al guardar la programación.' });
+    }
+};
+
+module.exports = { getOrdenesTrabajo, createTarea, cargarMaterial, cargarHoras, actualizarEstadoTarea, createOTDirecta, actualizarEstadoOT, enviarOT, getCorreosInternos, actualizarHorarioOT };

@@ -6,6 +6,9 @@ import api from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { tienePermiso, PERMISOS_FRONT } from '../config/permissions';
 
+import ConfiguracionHorarioOT from '../components/ConfiguracionHorarioOT';
+import { calcularHorasEfectivas } from '../utils/horarios';
+
 // ==========================================
 // 🚀 COMPONENTE UI: BUSCADOR INTELIGENTE
 // ==========================================
@@ -69,7 +72,7 @@ const OrdenesTrabajo = () => {
     // 🛡️ CANDADOS DE SEGURIDAD CENTRALIZADOS
     const puedeGestionarOT = tienePermiso(user?.rol, PERMISOS_FRONT.OT_FINANZAS);
     const puedeOperarTaller = tienePermiso(user?.rol, PERMISOS_FRONT.OT_TALLER_OPERAR);
-    const puedeVerFinanzas = puedeGestionarOT; // Los operarios no ven plata
+    const puedeVerFinanzas = puedeGestionarOT;
 
     const [isOtEmailModalOpen, setIsOtEmailModalOpen] = useState(false);
     const [otEmailDestino, setOtEmailDestino] = useState('');
@@ -106,7 +109,7 @@ const OrdenesTrabajo = () => {
     const [loading, setLoading] = useState(true);
     const [filtro, setFiltro] = useState('');
     const [selectedOT, setSelectedOT] = useState(null);
-    const [activeTab, setActiveTab] = useState(puedeVerFinanzas ? 'resumen' : 'tareas'); // Default dinámico
+    const [activeTab, setActiveTab] = useState(puedeVerFinanzas ? 'resumen' : 'tareas');
 
     const [isOtDirectaAlertOpen, setIsOtDirectaAlertOpen] = useState(false);
     const [aceptaRiesgoOt, setAceptaRiesgoOt] = useState(false);
@@ -309,7 +312,6 @@ const OrdenesTrabajo = () => {
         ot.folio?.toLowerCase().includes(filtro.toLowerCase()) || ot.cliente_nombre?.toLowerCase().includes(filtro.toLowerCase())
     );
 
-    // 🔧 CORRECCIÓN: SINGULARES EN EL MAPEO
     const opcionesTareas = catalogoTareas.map(t => ({ id: t.codigo, label: `[${t.codigo}] ${t.nombre}` }));
     const opcionesOperarios = operarios.map(op => ({ id: op.id, label: `[${op.codigo || 'OPE.---.000'}] ${op.nombre} - ${op.especialidad}` }));
     const opcionesEquipos = catalogoEquipos.map(eq => ({ id: eq.id, label: `[${eq.codigo || 'MAQ.---.000'}] ${eq.nombre}` }));
@@ -350,7 +352,6 @@ const OrdenesTrabajo = () => {
                                 <th className="p-4 font-medium text-center">Estado</th>
                                 <th className="p-4 font-medium text-center">Progreso</th>
                                 <th className="p-4 font-medium">Tarea Activa</th>
-                                {/* 🛡️ VISIBILIDAD FINANCIERA RESTRINGIDA */}
                                 {puedeVerFinanzas && <th className="p-4 font-medium text-right">Precio Venta</th>}
                                 {puedeVerFinanzas && <th className="p-4 font-medium text-right">Costo Real</th>}
                                 {puedeVerFinanzas && <th className="p-4 font-medium text-right">Rentabilidad</th>}
@@ -359,13 +360,41 @@ const OrdenesTrabajo = () => {
                         <tbody className="divide-y divide-dark-border">
                             {otsFiltradas.map((ot) => (
                                 <tr key={ot.id} onClick={() => abrirPanelOT(ot)} className="hover:bg-dark-bg/30 transition-colors cursor-pointer group">
-                                    <td className="p-4 font-bold text-brand group-hover:text-brand-hover">{ot.folio}</td>
+                                    {/* 🛠️ CORRECCIÓN DE LA TABLA: Columna de Folio unificada */}
+                                    <td className="p-4">
+                                        <p className="font-bold text-brand group-hover:text-brand-hover">{ot.folio}</p>
+                                        {(() => {
+                                            if (!ot.horario_programado) return null;
+                                            const config = typeof ot.horario_programado === 'string' ? JSON.parse(ot.horario_programado) : ot.horario_programado;
+
+                                            if (config.fecha_entrega && !['entregada', 'facturada'].includes(ot.estado)) {
+                                                const ahora = new Date();
+                                                const limite = new Date(`${config.fecha_entrega}T18:00:00`);
+
+                                                if (ahora >= limite) {
+                                                    return <p className="text-[10px] font-bold text-red-500 mt-1 uppercase animate-pulse">🔴 Atrasada</p>;
+                                                }
+
+                                                const hhRestantes = calcularHorasEfectivas(ahora, limite, config);
+
+                                                return (
+                                                    <div className={`mt-1 flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded w-max border ${hhRestantes < 15 ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>
+                                                        ⏳ {hhRestantes.toFixed(1)} HH Rest.
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        })()}
+                                    </td>
+
                                     <td className="p-4 text-white font-medium">{ot.cliente_nombre}</td>
+
                                     <td className="p-4 text-center">
                                         <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase border ${getEstadoBadge(ot.estado)}`}>
                                             {ot.estado}
                                         </span>
                                     </td>
+
                                     <td className="p-4 text-center">
                                         {(() => {
                                             const total = ot.tareas?.length || 0;
@@ -382,6 +411,7 @@ const OrdenesTrabajo = () => {
                                             );
                                         })()}
                                     </td>
+
                                     <td className="p-4">
                                         {(() => {
                                             const enProceso = ot.tareas?.find(t => t.estado === 'en_proceso');
@@ -395,6 +425,7 @@ const OrdenesTrabajo = () => {
                                             return <span className="text-xs text-txt-secondary italic">—</span>;
                                         })()}
                                     </td>
+
                                     {puedeVerFinanzas && <td className="p-4 text-right text-txt-secondary font-mono">${Number(ot.precio_venta).toLocaleString('es-CL')}</td>}
                                     {puedeVerFinanzas && <td className="p-4 text-right text-txt-secondary font-mono">${Number(ot.costo_real).toLocaleString('es-CL')}</td>}
                                     {puedeVerFinanzas && (
@@ -409,18 +440,17 @@ const OrdenesTrabajo = () => {
                 </div>
             </div>
 
-            {/* PANEL DETALLE OT */}
+            {/* 🛠️ CORRECCIÓN DEL SCROLL: Nuevas clases en los contenedores del modal */}
             {selectedOT && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fadeIn">
-                    <div className="bg-dark-surface border border-dark-border w-full max-w-6xl max-h-[95vh] rounded-xl shadow-2xl flex flex-col overflow-hidden">
-                        <div className="p-6 border-b border-dark-border bg-dark-bg/50 flex justify-between items-start">
+                <div className="fixed inset-0 z-[60] flex justify-center bg-black/80 backdrop-blur-sm p-4 py-10 animate-fadeIn overflow-y-auto">
+                    <div className="bg-dark-surface border border-dark-border w-full max-w-6xl h-max my-auto rounded-xl shadow-2xl flex flex-col">
+                        <div className="p-6 border-b border-dark-border bg-dark-bg/50 flex justify-between items-start rounded-t-xl">
                             <div>
                                 <div className="flex flex-wrap items-center gap-3 mb-1">
                                     <h3 className="text-xl md:text-2xl font-bold text-white">{selectedOT.folio}</h3>
                                     <span className={`px-2 py-1 rounded text-xs font-bold uppercase border ${getEstadoBadge(selectedOT.estado)}`}>{selectedOT.estado}</span>
 
                                     <div className="flex flex-wrap items-center gap-2 ml-2">
-                                        {/* Flujo de Estados Maestros y Operativos */}
                                         {puedeOperarTaller && selectedOT.estado === 'abierta' && (<button onClick={() => handleCambiarEstadoOT('en_proceso')} className="text-[10px] bg-amber-600/20 hover:bg-amber-500 text-amber-400 hover:text-white border border-amber-500/30 px-3 py-1 rounded font-bold uppercase">🚀 Iniciar Producción</button>)}
                                         {puedeOperarTaller && selectedOT.estado === 'en_proceso' && (<button onClick={() => handleCambiarEstadoOT('lista_para_entrega')} className="text-[10px] bg-purple-600/20 hover:bg-purple-500 text-purple-400 hover:text-white border border-purple-500/30 px-3 py-1 rounded font-bold uppercase">🛎️ Lista para Entrega</button>)}
                                         {puedeGestionarOT && selectedOT.estado === 'lista_para_entrega' && (<><button onClick={() => handleCambiarEstadoOT('entregada')} className="text-[10px] bg-indigo-600/20 hover:bg-indigo-500 text-indigo-400 hover:text-white border border-indigo-500/30 px-3 py-1 rounded font-bold uppercase">🚚 Marcar Entregada</button><button onClick={() => handleCambiarEstadoOT('en_proceso')} className="text-[10px] bg-red-600/20 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/30 px-3 py-1 rounded font-bold uppercase">❌ Rechazar (A Taller)</button></>)}
@@ -465,9 +495,16 @@ const OrdenesTrabajo = () => {
                                     <DollarSign size={16} /> Centro de Costos
                                 </button>
                             )}
+
+                            {puedeGestionarOT && (
+                                <button onClick={() => setActiveTab('horarios')} className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${activeTab === 'horarios' ? 'border-brand text-brand' : 'border-transparent text-txt-secondary hover:text-white'}`}>
+                                    <Clock size={16} /> Horarios y Excepciones
+                                </button>
+                            )}
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-6 bg-dark-surface custom-scrollbar">
+                        {/* 🛠️ CORRECCIÓN DEL SCROLL: Ajustamos el cuerpo dinámico del modal */}
+                        <div className="p-6 bg-dark-surface rounded-b-xl">
 
                             {/* PESTAÑA RESUMEN */}
                             {activeTab === 'resumen' && puedeVerFinanzas && (
@@ -489,7 +526,6 @@ const OrdenesTrabajo = () => {
                                                     </tr>
                                                 </thead>
                                                 <tbody className="divide-y divide-dark-border">
-                                                    {/* 🔧 CORRECCIÓN: SINGULARES (cotizacion y detalle_cotizacion) */}
                                                     {selectedOT.cotizacion?.detalle_cotizaciones?.map((item) => {
                                                         const codigoIndustrial = item.producto?.codigo || item.operario?.codigo || item.equipo?.codigo;
                                                         return (
@@ -524,7 +560,6 @@ const OrdenesTrabajo = () => {
                             {activeTab === 'costos' && puedeVerFinanzas && (() => {
                                 let totalMateriales = 0; let totalHH = 0; let totalHM = 0;
                                 selectedOT.tareas?.forEach(tarea => {
-                                    // 🔧 CORRECCIÓN: SINGULARES (unidad_stock y producto)
                                     tarea.consumo_ot?.forEach(c => { totalMateriales += Number(c.cantidad_utilizada) * Number(c.unidad_stock?.producto?.precio_compra || 0); });
                                     tarea.registro_tiempo?.forEach(r => { if (r.operario_id) totalHH += Number(r.costo_total); if (r.equipo_id) totalHM += Number(r.costo_total); });
                                 });
@@ -608,7 +643,6 @@ const OrdenesTrabajo = () => {
                                                                 <div className="flex flex-wrap items-center gap-2 mt-1.5">
                                                                     <span className="text-[10px] text-txt-secondary font-mono bg-dark-surface border border-dark-border px-1.5 py-0.5 rounded">{tarea.tipo}</span>
 
-                                                                    {/* Flujo Productivo (Play / Pause / Stop) */}
                                                                     {puedeOperarTaller && selectedOT.estado === 'en_proceso' && tarea.estado === 'pendiente' && (<button onClick={(e) => { e.stopPropagation(); handleCambiarEstadoTarea(tarea, 'en_proceso'); }} className="text-[10px] bg-blue-500/10 hover:bg-blue-500 text-blue-400 hover:text-white border border-blue-500/30 px-2 py-0.5 rounded transition-colors uppercase font-bold">▶️ Iniciar</button>)}
                                                                     {puedeOperarTaller && selectedOT.estado === 'en_proceso' && tarea.estado === 'en_proceso' && (<>
                                                                         <button onClick={(e) => { e.stopPropagation(); setTareaPausando(tarea); setIsPauseModalOpen(true); }} className="text-[10px] bg-orange-500/10 hover:bg-orange-500 text-orange-400 hover:text-white border border-orange-500/30 px-2 py-0.5 rounded transition-colors uppercase font-bold">⏸️ Pausar</button>
@@ -625,7 +659,6 @@ const OrdenesTrabajo = () => {
                                                                 {tarea.estado}
                                                             </span>
 
-                                                            {/* Botones de Inyección de Costos */}
                                                             {puedeOperarTaller && !['entregada', 'facturada'].includes(selectedOT.estado) && (
                                                                 <>
                                                                     <button onClick={() => { setTareaSeleccionadaHoras(tarea); setIsHorasModalOpen(true); }} className="bg-dark-surface border border-blue-500/50 hover:bg-blue-500 text-blue-400 hover:text-white px-3 py-1.5 rounded text-xs transition-colors font-medium flex items-center gap-2">⏱️ Cargar HH</button>
@@ -635,12 +668,10 @@ const OrdenesTrabajo = () => {
                                                         </div>
                                                     </div>
 
-                                                    {/* DETALLE EXPANDIDO DE LA TAREA */}
                                                     {expandedTasks[tarea.id] && (
                                                         <div className="bg-dark-surface border-t border-dark-border p-5 animate-fadeIn">
                                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-                                                                {/* Insumos */}
                                                                 <div>
                                                                     <h6 className="text-[10px] font-bold text-txt-secondary uppercase mb-3 border-b border-dark-border pb-1">📦 Bodega Consumida</h6>
                                                                     {!tarea.consumo_ot?.length ? (<p className="text-xs text-slate-500 italic">Nada consumido aún.</p>) : (
@@ -648,7 +679,6 @@ const OrdenesTrabajo = () => {
                                                                             {tarea.consumo_ot.map(c => (
                                                                                 <li key={c.id} className="text-xs flex flex-col gap-1 border-l-2 border-brand/30 pl-2">
                                                                                     <div className="flex justify-between text-slate-300">
-                                                                                        {/* 🔧 CORRECCIÓN: SINGULARES */}
                                                                                         <span>{Number(c.cantidad_utilizada)}x {c.unidad_stock?.producto?.nombre}</span>
                                                                                         {puedeVerFinanzas && (<span className="text-brand font-mono font-bold">${(Number(c.cantidad_utilizada) * Number(c.unidad_stock?.producto?.precio_compra || 0)).toLocaleString('es-CL')}</span>)}
                                                                                     </div>
@@ -659,7 +689,6 @@ const OrdenesTrabajo = () => {
                                                                     )}
                                                                 </div>
 
-                                                                {/* Tiempos */}
                                                                 <div>
                                                                     <h6 className="text-[10px] font-bold text-txt-secondary uppercase mb-3 border-b border-dark-border pb-1">⏱️ Horas (HH/HM) Inyectadas</h6>
                                                                     {!tarea.registro_tiempo?.length ? (<p className="text-xs text-slate-500 italic">Sin registros de tiempo.</p>) : (
@@ -667,7 +696,6 @@ const OrdenesTrabajo = () => {
                                                                             {tarea.registro_tiempo.map(t => (
                                                                                 <li key={t.id} className="text-xs flex flex-col gap-1 border-l-2 border-emerald-500/30 pl-2">
                                                                                     <div className="flex justify-between text-slate-300">
-                                                                                        {/* 🔧 CORRECCIÓN: SINGULARES */}
                                                                                         <span><span className="font-bold">{Number(t.horas)}h</span> - {t.operario_id ? t.operario?.nombre : t.equipo?.nombre}</span>
                                                                                         {puedeVerFinanzas && (<span className="text-amber-400 font-mono font-bold">${Number(t.costo_total).toLocaleString('es-CL')}</span>)}
                                                                                     </div>
@@ -678,7 +706,6 @@ const OrdenesTrabajo = () => {
                                                                     )}
                                                                 </div>
 
-                                                                {/* Cronómetro Real */}
                                                                 <div className="bg-dark-bg p-4 rounded-lg border border-dark-border shadow-inner">
                                                                     <h6 className="text-[10px] font-bold text-blue-400 uppercase mb-3 border-b border-dark-border pb-1 flex items-center gap-1">
                                                                         <Clock size={12} /> Cronómetro Operativo
@@ -696,12 +723,21 @@ const OrdenesTrabajo = () => {
                                                                         {tarea.fecha_inicio_real && tarea.fecha_fin_real && (() => {
                                                                             const tiempoTotalMs = new Date(tarea.fecha_fin_real) - new Date(tarea.fecha_inicio_real);
                                                                             const tiempoPausadoMs = (tarea.pausas_tarea || []).reduce((acc, p) => p.fecha_reanudacion ? acc + (new Date(p.fecha_reanudacion) - new Date(p.fecha_pausa)) : acc, 0);
-                                                                            const tiempoEfectivoMs = Math.max(0, tiempoTotalMs - tiempoPausadoMs);
+                                                                            const horasRelojTotales = (tiempoTotalMs - tiempoPausadoMs) / 3600000;
+
+                                                                            let horasHabilesEfectivas = calcularHorasEfectivas(tarea.fecha_inicio_real, tarea.fecha_fin_real, selectedOT.horario_programado);
+                                                                            horasHabilesEfectivas = Math.max(0, horasHabilesEfectivas - (tiempoPausadoMs / 3600000));
+
                                                                             return (
                                                                                 <div className="pt-3 mt-3 border-t border-dark-border space-y-2">
-                                                                                    <div className="flex justify-between items-center text-xs font-bold"><span className="text-[10px] text-txt-secondary uppercase">T. Bruto:</span><span className="text-white font-mono">{(tiempoTotalMs / 3600000).toFixed(1)}h</span></div>
-                                                                                    <div className="flex justify-between items-center text-xs font-bold"><span className="text-[10px] text-orange-400 uppercase">Pausas:</span><span className="text-orange-400 font-mono">{(tiempoPausadoMs / 3600000).toFixed(1)}h</span></div>
-                                                                                    <div className="flex justify-between items-center text-xs font-bold"><span className="text-[10px] text-emerald-400 uppercase">T. Neto:</span><span className="text-emerald-400 font-mono text-sm">{(tiempoEfectivoMs / 3600000).toFixed(1)}h</span></div>
+                                                                                    <div className="flex justify-between items-center text-[10px] text-txt-secondary">
+                                                                                        <span className="uppercase">Tiempo Reloj (24/7):</span>
+                                                                                        <span className="font-mono">{horasRelojTotales.toFixed(1)}h</span>
+                                                                                    </div>
+                                                                                    <div className="flex justify-between items-center text-xs font-bold bg-blue-500/10 p-2 rounded border border-blue-500/20">
+                                                                                        <span className="text-[10px] text-blue-400 uppercase">Tiempo Real (Hábil):</span>
+                                                                                        <span className="text-blue-400 font-mono text-sm">{horasHabilesEfectivas.toFixed(1)}h</span>
+                                                                                    </div>
                                                                                 </div>
                                                                             );
                                                                         })()}
@@ -715,6 +751,10 @@ const OrdenesTrabajo = () => {
                                         </div>
                                     )}
                                 </div>
+                            )}
+
+                            {activeTab === 'horarios' && puedeGestionarOT && (
+                                <ConfiguracionHorarioOT ot={selectedOT} onUpdate={cargarOTs} />
                             )}
                         </div>
                     </div>
@@ -770,7 +810,7 @@ const OrdenesTrabajo = () => {
                 </div>
             )}
 
-            {/* MODALES TALLER: CREAR TAREA, MATERIALES Y HH (Mismo HTML, usan BuscadorInteligente que ya corregimos con singulares) */}
+            {/* MODALES TALLER: CREAR TAREA, MATERIALES Y HH */}
             {isTareaModalOpen && (
                 <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn">
                     <div className="bg-dark-surface border border-brand/50 w-full max-w-md rounded-xl shadow-2xl p-6 overflow-visible">

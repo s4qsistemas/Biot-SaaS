@@ -236,6 +236,7 @@ model OrdenTrabajo {
   entidad    Entidad    @relation(fields: [entidad_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   cotizacion Cotizacion? @relation(fields: [cotizacion_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   tareas     Tarea[]
+  horario_programado Json?
 
   @@unique([tenant_id, folio])
 }
