@@ -55,24 +55,26 @@ export default function Home() {
                 </div>
             </section>
 
-            {/* SECCIÓN DE PRECIOS */}
-            <section id="planes" className="py-24 bg-dark-bg border-t border-dark-border">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center mb-16">
-                        <h2 className="text-base text-brand font-semibold tracking-wide uppercase">Precios</h2>
-                        <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-white sm:text-4xl">
-                            Planes diseñados para tu maestranza
-                        </p>
-                        <p className="mt-4 max-w-2xl text-xl text-txt-secondary mx-auto">
-                            Comienza gratis hoy mismo. Sin tarjetas de crédito, sin compromisos ocultos.
-                        </p>
+            {/* SECCIÓN DE PRECIOS (OCULTA TEMPORALMENTE PARA PRODUCCIÓN) */}
+            {false && (
+                <section id="planes" className="py-24 bg-dark-bg border-t border-dark-border">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="text-center mb-16">
+                            <h2 className="text-base text-brand font-semibold tracking-wide uppercase">Precios</h2>
+                            <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-white sm:text-4xl">
+                                Planes diseñados para tu maestranza
+                            </p>
+                            <p className="mt-4 max-w-2xl text-xl text-txt-secondary mx-auto">
+                                Comienza gratis hoy mismo. Sin tarjetas de crédito, sin compromisos ocultos.
+                            </p>
+                        </div>
+
+                        {/* Aquí inyectamos el componente en Modo Público */}
+                        <PricingCards modo="public" />
+
                     </div>
-
-                    {/* Aquí inyectamos el componente en Modo Público */}
-                    <PricingCards modo="public" />
-
-                </div>
-            </section>
+                </section>
+            )}
 
             {/* Sección de Características (Traída del Portal) */}
             <section id="caracteristicas" className="max-w-7xl mx-auto py-24 px-6 border-t border-dark-border w-full">
