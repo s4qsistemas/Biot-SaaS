@@ -67,7 +67,7 @@ export default function Login() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   className="appearance-none block w-full px-3 py-2 bg-dark-bg border border-dark-border rounded-lg text-txt-primary placeholder-txt-secondary focus:outline-none focus:ring-1 focus:ring-brand focus:border-brand sm:text-sm transition-colors"
-                  placeholder="admin@biot.cl"
+                  placeholder="usuario@empresa.cl"
                 />
               </div>
             </div>

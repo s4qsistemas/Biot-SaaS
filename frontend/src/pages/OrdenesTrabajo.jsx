@@ -706,7 +706,7 @@ const OrdenesTrabajo = () => {
                                                                     )}
                                                                 </div>
 
-                                                                <div className="bg-dark-bg p-4 rounded-lg border border-dark-border shadow-inner">
+                                                                        <div className="bg-dark-bg p-4 rounded-lg border border-dark-border shadow-inner">
                                                                     <h6 className="text-[10px] font-bold text-blue-400 uppercase mb-3 border-b border-dark-border pb-1 flex items-center gap-1">
                                                                         <Clock size={12} /> Cronómetro Operativo
                                                                     </h6>
@@ -742,6 +742,31 @@ const OrdenesTrabajo = () => {
                                                                             );
                                                                         })()}
                                                                     </div>
+
+                                                                    {/* NUEVO: HISTORIAL DE PAUSAS Y JUSTIFICACIONES */}
+                                                                    {tarea.pausas_tarea?.length > 0 && (
+                                                                        <div className="mt-4 pt-4 border-t border-dark-border">
+                                                                            <div className="flex items-center gap-1.5 mb-2">
+                                                                                <span className="text-[10px] font-bold text-orange-400 uppercase">🚩 Historial de Pausas</span>
+                                                                                <span className="text-[10px] bg-orange-500/10 text-orange-400 px-1 rounded-full">{tarea.pausas_tarea.length}</span>
+                                                                            </div>
+                                                                            <div className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar pr-1">
+                                                                                {tarea.pausas_tarea.map((p, idx) => (
+                                                                                    <div key={idx} className="bg-dark-bg/50 border border-orange-500/10 p-2 rounded text-[10px] flex flex-col gap-1">
+                                                                                        <div className="flex justify-between items-center text-txt-secondary">
+                                                                                            <span>{new Date(p.fecha_pausa).toLocaleString('es-CL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+                                                                                            {p.fecha_reanudacion ? (
+                                                                                                <span className="text-emerald-500">Reanudada: {new Date(p.fecha_reanudacion).toLocaleString('es-CL', { hour: '2-digit', minute: '2-digit' })}</span>
+                                                                                            ) : (
+                                                                                                <span className="text-orange-500 font-bold animate-pulse">En curso</span>
+                                                                                            )}
+                                                                                        </div>
+                                                                                        <p className="text-white italic">"{p.motivo}"</p>
+                                                                                    </div>
+                                                                                ))}
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -888,6 +913,39 @@ const OrdenesTrabajo = () => {
                             <div className="flex justify-end gap-3 pt-4 mt-4 border-t border-dark-border">
                                 <button type="button" onClick={() => setIsHorasModalOpen(false)} className="px-4 py-2 text-sm text-txt-secondary hover:text-white">Cancelar</button>
                                 <button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg text-sm font-medium">Registrar Costo</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL PAUSAR TAREA */}
+            {isPauseModalOpen && tareaPausando && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fadeIn">
+                    <div className="bg-dark-surface border border-orange-500/50 w-full max-w-md rounded-xl shadow-2xl p-6">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-lg font-bold text-orange-400 flex items-center gap-2">⏸️ Pausar Tarea</h3>
+                            <button onClick={() => setIsPauseModalOpen(false)} className="text-txt-secondary hover:text-white transition-colors">✕</button>
+                        </div>
+                        <div className="mb-4 p-3 bg-dark-bg border border-dark-border rounded-lg">
+                            <p className="text-xs text-txt-secondary uppercase">Tarea a pausar:</p>
+                            <p className="font-bold text-white text-sm">{tareaPausando.nombre}</p>
+                        </div>
+                        <form onSubmit={(e) => { e.preventDefault(); handlePausarTarea(); }} className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-medium text-txt-secondary mb-1">Motivo de la Pausa (Obligatorio)</label>
+                                <textarea
+                                    required
+                                    rows="3"
+                                    placeholder="Ej: Falta de material en bodega, esperando repuesto externo..."
+                                    className="w-full bg-dark-bg border border-dark-border rounded-lg p-3 text-sm text-white focus:border-orange-500 outline-none resize-none transition-all"
+                                    value={motivoPausa}
+                                    onChange={(e) => setMotivoPausa(e.target.value)}
+                                />
+                            </div>
+                            <div className="flex justify-end gap-3 pt-4 mt-4 border-t border-dark-border">
+                                <button type="button" onClick={() => setIsPauseModalOpen(false)} className="px-4 py-2 text-sm text-txt-secondary hover:text-white">Cancelar</button>
+                                <button type="submit" disabled={!motivoPausa.trim()} className="bg-orange-600 hover:bg-orange-500 disabled:bg-slate-700 disabled:text-slate-500 text-white px-6 py-2 rounded-lg text-sm font-medium shadow-lg shadow-orange-900/20 transition-all">Detener Tarea</button>
                             </div>
                         </form>
                     </div>
