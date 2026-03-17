@@ -4,6 +4,47 @@ const { generarTemplateOT } = require('../utils/pdfTemplates');
 const { generarPdfBase64 } = require('../services/pdf.service');
 const { enviarWebhookN8n } = require('../services/n8n.service');
 
+// ⚙️ MOTOR FINANCIERO: Recalcula el costo real y margen de la OT desde cero
+const recalcularCostosOT = async (otId) => {
+    const ot = await prisma.ordenTrabajo.findUnique({
+        where: { id: parseInt(otId) },
+        include: {
+            tareas: {
+                include: {
+                    consumo_ot: { include: { unidad_stock: { include: { producto: true } } } },
+                    registro_tiempo: true
+                }
+            }
+        }
+    });
+
+    if (!ot) return;
+
+    let nuevoCostoReal = 0;
+
+    ot.tareas.forEach(tarea => {
+        tarea.consumo_ot.forEach(c => {
+            nuevoCostoReal += Number(c.cantidad_utilizada) * Number(c.unidad_stock?.producto?.precio_compra || 0);
+        });
+        tarea.registro_tiempo.forEach(r => {
+            nuevoCostoReal += Number(r.costo_total || 0);
+        });
+    });
+
+    const precioVenta = Number(ot.precio_venta || 0);
+    const margenReal = precioVenta - nuevoCostoReal;
+    const margenPorcentaje = precioVenta > 0 ? (margenReal / precioVenta) * 100 : 0;
+
+    await prisma.ordenTrabajo.update({
+        where: { id: parseInt(otId) },
+        data: {
+            costo_real: nuevoCostoReal,
+            margen_real: margenReal,
+            margen_porcentaje: margenPorcentaje
+        }
+    });
+};
+
 const getOrdenesTrabajo = async (req, res) => {
     try {
         const ordenes = await prisma.ordenTrabajo.findMany({
@@ -74,7 +115,6 @@ const cargarMaterial = async (req, res) => {
                 throw new Error("Stock insuficiente.");
             }
 
-            // 1. Descuento atómico de stock
             const stockActualizado = await tx.unidadStock.update({
                 where: { id: parseInt(unidad_stock_id) },
                 data: { cantidad_disponible: { decrement: cantidadNumerica } }
@@ -99,7 +139,6 @@ const cargarMaterial = async (req, res) => {
                 data: { tarea_id: parseInt(tareaId), unidad_stock_id: stockActualizado.id, cantidad_utilizada: cantidadNumerica }
             });
 
-            // 2. Incremento atómico de costos para evitar Race Conditions
             const costoAdicional = cantidadNumerica * Number(stockActual.producto.precio_compra);
 
             const otConCosto = await tx.ordenTrabajo.update({
@@ -107,7 +146,6 @@ const cargarMaterial = async (req, res) => {
                 data: { costo_real: { increment: costoAdicional } }
             });
 
-            // 3. Recálculo de márgenes basado en el valor atómico resultante
             const nuevoMargenReal = Number(otConCosto.precio_venta) - Number(otConCosto.costo_real);
             let nuevoMargenPorcentaje = Number(otConCosto.precio_venta) > 0 ? (nuevoMargenReal / Number(otConCosto.precio_venta)) * 100 : (Number(otConCosto.costo_real) > 0 ? -100 : 0);
 
@@ -163,7 +201,6 @@ const cargarHoras = async (req, res) => {
                 }
             });
 
-            // Incremento atómico
             const otConCosto = await tx.ordenTrabajo.update({
                 where: { id: parseInt(id) },
                 data: { costo_real: { increment: costoTotalHoras } }
@@ -243,7 +280,6 @@ const createOTDirecta = async (req, res) => {
 
         const precio = precio_venta ? Number(precio_venta) : 0;
 
-        // Manejo de Colisión por Race Condition en Folio
         let nuevaOT;
         try {
             nuevaOT = await prisma.ordenTrabajo.create({
@@ -258,7 +294,7 @@ const createOTDirecta = async (req, res) => {
             if (e.code === 'P2002') {
                 nuevaOT = await prisma.ordenTrabajo.create({
                     data: {
-                        tenant_id, folio: `OT-DIR-R-${Date.now()}`, // Fallback si dos personas crean a la vez
+                        tenant_id, folio: `OT-DIR-R-${Date.now()}`,
                         entidad_id: cliente.id, cliente_nombre: cliente.nombre, estado: 'abierta',
                         fecha_inicio: new Date(), precio_venta: precio, costo_real: 0,
                         margen_real: precio, margen_porcentaje: precio > 0 ? 100 : 0
@@ -350,7 +386,6 @@ const actualizarHorarioOT = async (req, res) => {
         const { id } = req.params;
         const { horario_programado } = req.body;
 
-        // Asegurarnos de que la OT pertenece al Tenant
         const ot = await prisma.ordenTrabajo.findFirst({
             where: { id: parseInt(id), tenant_id: req.user.tenant_id }
         });
@@ -359,7 +394,7 @@ const actualizarHorarioOT = async (req, res) => {
 
         await prisma.ordenTrabajo.update({
             where: { id: parseInt(id) },
-            data: { horario_programado } // Guardamos el JSON directamente
+            data: { horario_programado }
         });
 
         res.json({ message: 'Horario actualizado correctamente.' });
@@ -369,12 +404,10 @@ const actualizarHorarioOT = async (req, res) => {
     }
 };
 
-// 1. ELIMINAR TAREA (Solo si está limpia)
 const eliminarTarea = async (req, res) => {
     try {
         const { tareaId } = req.params;
 
-        // 👇 Corrección 1: prisma.tarea (No tareaOT)
         const tarea = await prisma.tarea.findUnique({
             where: { id: parseInt(tareaId) },
             include: { consumo_ot: true, registro_tiempo: true }
@@ -386,7 +419,6 @@ const eliminarTarea = async (req, res) => {
             return res.status(400).json({ message: 'No se puede eliminar: Tiene materiales o tiempos cargados.' });
         }
 
-        // 👇 Corrección 2: prisma.tarea (No tareaOT)
         await prisma.tarea.delete({ where: { id: parseInt(tareaId) } });
         res.json({ message: 'Tarea eliminada correctamente.' });
     } catch (error) {
@@ -395,12 +427,10 @@ const eliminarTarea = async (req, res) => {
     }
 };
 
-// 2. EXTORNO DE MATERIAL (Devuelve a bodega y registra el historial)
 const revertirMaterial = async (req, res) => {
     try {
         const { id, tareaId, consumoId } = req.params;
 
-        // 1. Buscamos el consumo y traemos la info de la OT para dejar un historial claro
         const consumo = await prisma.consumoOt.findUnique({
             where: { id: parseInt(consumoId) },
             include: {
@@ -415,18 +445,14 @@ const revertirMaterial = async (req, res) => {
         const folioOT = consumo.tarea?.orden_trabajo?.folio || 'Sin Folio';
         const nombreTarea = consumo.tarea?.nombre || 'Tarea Desconocida';
 
-        // 2. Transacción: Borrar costo, devolver físico y CREAR RASTRO DE AUDITORÍA
         await prisma.$transaction([
-            // Paso A: Borrar el registro del costo en la OT
             prisma.consumoOt.delete({ where: { id: parseInt(consumoId) } }),
 
-            // Paso B: Devolver el stock físico a la bodega
             prisma.unidadStock.update({
                 where: { id: consumo.unidad_stock_id },
                 data: { cantidad_disponible: { increment: consumo.cantidad_utilizada } }
             }),
 
-            // 🧠 Paso C: El Estándar ERP -> Inyectar la devolución en el historial de Movimientos
             prisma.movimiento.create({
                 data: {
                     tenant_id: req.user.tenant_id,
@@ -441,6 +467,10 @@ const revertirMaterial = async (req, res) => {
             })
         ]);
 
+        if (consumo.tarea?.ot_id) {
+            await recalcularCostosOT(consumo.tarea.ot_id);
+        }
+
         res.json({ message: 'Material devuelto a bodega exitosamente.' });
     } catch (error) {
         console.error(error);
@@ -448,15 +478,24 @@ const revertirMaterial = async (req, res) => {
     }
 };
 
-// 3. EXTORNO DE HORAS
 const revertirHoras = async (req, res) => {
     try {
         const { id, tareaId, registroId } = req.params;
 
-        // 👇 AQUI ESTÁ LA MAGIA: Debe ser estrictamente prisma.registroTiempo
+        const registro = await prisma.registroTiempo.findUnique({
+            where: { id: parseInt(registroId) },
+            include: { tarea: true }
+        });
+
+        if (!registro) return res.status(404).json({ message: 'Registro no encontrado.' });
+
         await prisma.registroTiempo.delete({
             where: { id: parseInt(registroId) }
         });
+
+        if (registro.tarea?.ot_id) {
+            await recalcularCostosOT(registro.tarea.ot_id);
+        }
 
         res.json({ message: 'Registro de horas eliminado exitosamente.' });
     } catch (error) {
