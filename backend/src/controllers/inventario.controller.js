@@ -101,8 +101,9 @@ const registrarMovimiento = async (req, res) => {
 
 const inicializarStock = async (req, res) => {
     try {
-        const { producto_id, tipo_unidad, cantidad, ubicacion_id } = req.body;
+        const { producto_id, tipo_unidad, cantidad, ubicacion_id, bodega, ubicacion } = req.body;
         const tenant_id = req.user.tenant_id;
+        const usuario_id = req.user.id;
 
         if (!producto_id || !cantidad) return res.status(400).json({ message: "Faltan datos obligatorios" });
 
@@ -112,10 +113,33 @@ const inicializarStock = async (req, res) => {
 
         if (!productoValido) return res.status(404).json({ message: "Producto no válido" });
 
+        // Ubicación: Si el modal manda nombres (bodega/ubicación) y no ID, buscamos o creamos
+        let finalUbicacionId = ubicacion_id ? parseInt(ubicacion_id) : null;
+
+        if (!finalUbicacionId && bodega) {
+            const ubiEncontrada = await prisma.ubicacion.findFirst({
+                where: { tenant_id, bodega, ubicacion: ubicacion || null }
+            });
+
+            if (ubiEncontrada) {
+                finalUbicacionId = ubiEncontrada.id;
+            } else {
+                const nuevaUbi = await prisma.ubicacion.create({
+                    data: {
+                        tenant_id,
+                        bodega,
+                        ubicacion: ubicacion || null,
+                        centro: 'Bodega Principal'
+                    }
+                });
+                finalUbicacionId = nuevaUbi.id;
+            }
+        }
+
         // Calcular estado inicial basado en stock mínimo del producto
+        const cantidadInicial = parseFloat(cantidad);
         let nuevoEstado = 'disponible';
         const stockMinimo = Number(productoValido.stock_minimo || 0);
-        const cantidadInicial = parseFloat(cantidad);
 
         if (cantidadInicial <= 0) {
             nuevoEstado = 'sin_stock';
@@ -123,22 +147,38 @@ const inicializarStock = async (req, res) => {
             nuevoEstado = 'bajo_stock';
         }
 
-        // Simplificación de llaves foráneas usando IDs escalares
-        const nuevoStock = await prisma.unidadStock.create({
-            data: {
-                tenant_id,
-                producto_id: parseInt(producto_id),
-                ubicacion_id: ubicacion_id ? parseInt(ubicacion_id) : null,
-                cantidad_total: cantidadInicial,
-                cantidad_disponible: cantidadInicial,
-                cantidad_reservada: 0,
-                tipo_unit: tipo_unidad || 'GRANEL',
-                es_agregado: tipo_unidad === 'GRANEL',
-                estado: nuevoEstado,
-            }
+        // Transacción para asegurar creación de stock y movimiento inicial
+        const resultado = await prisma.$transaction(async (tx) => {
+            const nuevoStock = await tx.unidadStock.create({
+                data: {
+                    tenant_id,
+                    producto_id: parseInt(producto_id),
+                    ubicacion_id: finalUbicacionId,
+                    cantidad_total: cantidadInicial,
+                    cantidad_disponible: cantidadInicial,
+                    cantidad_reservada: 0,
+                    tipo_unit: tipo_unidad || 'GRANEL',
+                    es_agregado: tipo_unidad === 'GRANEL',
+                    estado: nuevoEstado,
+                }
+            });
+
+            await tx.movimiento.create({
+                data: {
+                    tenant_id,
+                    unidad_stock_id: nuevoStock.id,
+                    usuario_id: parseInt(usuario_id),
+                    tipo: 'ENTRADA',
+                    cantidad_movida: cantidadInicial,
+                    motivo: 'Registro Inicial de Stock (Manual)',
+                    referencia_tipo: 'MANUAL',
+                }
+            });
+
+            return nuevoStock;
         });
 
-        res.status(201).json(nuevoStock);
+        res.status(201).json(resultado);
     } catch (error) {
         console.error("Error al inicializar stock:", error);
         res.status(500).json({ message: 'Error interno' });
