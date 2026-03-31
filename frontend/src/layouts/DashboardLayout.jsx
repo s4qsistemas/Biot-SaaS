@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import Sidebar from '../components/Sidebar'; // Asegúrate de tener este componente
+import Sidebar from '../components/Sidebar';
+import ModalCrearEmpleado from '../components/ModalCrearEmpleado';
 
 export default function DashboardLayout() {
   const { user, logout } = useAuth();
@@ -10,6 +11,7 @@ export default function DashboardLayout() {
 
   // Estado para la sidebar
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isModalEmpleadoOpen, setIsModalEmpleadoOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -71,6 +73,20 @@ export default function DashboardLayout() {
                 </p>
               </div>
 
+              {/* Botón Nuevo Empleado */}
+              {user?.rol === 'admin' && !isImpersonating && (
+                <button
+                  onClick={() => setIsModalEmpleadoOpen(true)}
+                  className="px-3 py-1.5 rounded-lg bg-brand/10 text-brand border border-brand/20 hover:bg-brand hover:text-white transition-colors text-xs font-bold flex items-center gap-1 shadow-sm"
+                  title="Registrar Nuevo Empleado"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span className="hidden sm:inline">Nuevo Empleado</span>
+                </button>
+              )}
+
               <div className="h-8 w-px bg-dark-border mx-1"></div>
 
               <button
@@ -128,6 +144,12 @@ export default function DashboardLayout() {
         </main>
 
       </div>
+      
+      {/* Modal para Crear Empleado */}
+      <ModalCrearEmpleado 
+          isOpen={isModalEmpleadoOpen} 
+          onClose={() => setIsModalEmpleadoOpen(false)} 
+      />
     </div>
   );
 }

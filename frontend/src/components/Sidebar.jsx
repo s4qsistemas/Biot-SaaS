@@ -16,6 +16,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
 
     const menuItems = [
         { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, roles: PERMISOS_FRONT.CATALOGOS_LEER },
+        { name: 'Mi Equipo', path: '/dashboard/equipo', icon: Users, roles: PERMISOS_FRONT.USUARIOS_GESTION },
         { name: 'Cotizaciones', path: '/dashboard/cotizaciones', icon: FileText, roles: PERMISOS_FRONT.COTIZACIONES_LEER },
         { name: 'Inventario', path: '/dashboard/inventario', icon: Package, roles: PERMISOS_FRONT.INVENTARIO_LEER },
         { name: 'Órdenes Trabajo', path: '/dashboard/ordenes-trabajo', icon: Wrench, roles: PERMISOS_FRONT.OT_LEER },
