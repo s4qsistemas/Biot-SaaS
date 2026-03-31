@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
-import { ShieldCheck, Edit, Power, Users } from 'lucide-react';
+import { ShieldCheck, Edit, Power, UserCog } from 'lucide-react';
 import ModalEditarEmpleado from '../components/ModalEditarEmpleado';
 
 export default function Equipo() {
@@ -49,7 +49,7 @@ export default function Equipo() {
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <div>
                     <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-                        <Users className="text-brand" size={32} />
+                        <UserCog className="text-brand" size={32} />
                         Mi Equipo
                     </h1>
                     <p className="text-txt-secondary mt-1">Gestión del personal y accesos de tu maestranza.</p>
