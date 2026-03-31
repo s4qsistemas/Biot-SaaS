@@ -39,10 +39,10 @@ export default function Home() {
                     Lanzamiento 2026
                 </div>
                 <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 text-white">
-                    El motor para tu <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand to-emerald-400">Maestranza</span>
+                    El motor para tu <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand to-emerald-400">Empresa</span>
                 </h1>
                 <p className="text-lg md:text-xl text-txt-secondary max-w-2xl mb-10 leading-relaxed">
-                    Gestiona cotizaciones, operarios, órdenes de trabajo e inventario en un solo lugar. Todo en la nube, en tiempo real y diseñado para la industria metalmecánica.
+                    Gestiona cotizaciones, operarios, órdenes de trabajo e inventario en un solo lugar. Todo en la nube, en tiempo real y diseñado para la industria y manufactura.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
                     <Link to="/register" className="px-8 py-3.5 bg-brand text-white font-bold rounded-lg hover:bg-brand-dark transition-colors shadow-lg shadow-brand/20 flex items-center justify-center gap-2">
@@ -62,7 +62,7 @@ export default function Home() {
                         <div className="text-center mb-16">
                             <h2 className="text-base text-brand font-semibold tracking-wide uppercase">Precios</h2>
                             <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-white sm:text-4xl">
-                                Planes diseñados para tu maestranza
+                                Planes diseñados para tu empresa
                             </p>
                             <p className="mt-4 max-w-2xl text-xl text-txt-secondary mx-auto">
                                 Comienza gratis hoy mismo. Sin tarjetas de crédito, sin compromisos ocultos.
@@ -97,7 +97,7 @@ export default function Home() {
 
             {/* Footer / Contacto (Traído del Portal) */}
             <footer id="contacto" className="bg-dark-surface py-16 text-center border-t border-dark-border mt-auto">
-                <h2 className="text-2xl font-bold mb-4 text-txt-primary">¿Listo para transformar tu maestranza?</h2>
+                <h2 className="text-2xl font-bold mb-4 text-txt-primary">¿Listo para transformar tu negocio?</h2>
                 <p className="text-txt-secondary mb-8 max-w-lg mx-auto">Contáctanos para agendar una demostración y descubrir cómo optimizar tus procesos operativos.</p>
                 <Link to="/contacto" className="text-lg font-bold bg-brand text-white px-8 py-3 rounded-xl hover:bg-brand-dark transition-colors shadow-lg">
                     Contacto
