@@ -5,14 +5,17 @@ export default function ModalEditarMaestranza({ isOpen, onClose, empresaData, on
     const [activeTab, setActiveTab] = useState('empresa');
 
     // ESTADOS SEPARADOS POR TAB
-    const [datosEmpresa, setDatosEmpresa] = useState({ nombre_empresa: '', alias: '' });
+    const [datosEmpresa, setDatosEmpresa] = useState({ nombre_empresa: '', alias: '', giro: '', email_contacto: '', telefono: '' });
     const [datosAdmin, setDatosAdmin] = useState({ admin_id: '', nombre_admin: '', email_admin: '', reset_password: false });
 
     useEffect(() => {
         if (empresaData && isOpen) {
             setDatosEmpresa({
                 nombre_empresa: empresaData.nombre || '',
-                alias: empresaData.alias || ''
+                alias: empresaData.alias || '',
+                giro: empresaData.giro || '',
+                email_contacto: empresaData.email_contacto || '',
+                telefono: empresaData.telefono || ''
             });
             setDatosAdmin({
                 admin_id: empresaData.admin_id || '',
@@ -82,6 +85,20 @@ export default function ModalEditarMaestranza({ isOpen, onClose, empresaData, on
                                 <div>
                                     <label className="block text-xs font-medium text-txt-primary mb-1">Alias / Slug (URL Interna)</label>
                                     <input type="text" value={datosEmpresa.alias} onChange={e => setDatosEmpresa({ ...datosEmpresa, alias: e.target.value })} required className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-sm text-white focus:ring-1 focus:ring-brand" />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-3 gap-4">
+                                <div>
+                                    <label className="block text-xs font-medium text-txt-primary mb-1">Giro Comercial</label>
+                                    <input type="text" value={datosEmpresa.giro} onChange={e => setDatosEmpresa({ ...datosEmpresa, giro: e.target.value })} required className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-sm text-white focus:ring-1 focus:ring-brand" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-txt-primary mb-1">Email Contacto</label>
+                                    <input type="email" value={datosEmpresa.email_contacto} onChange={e => setDatosEmpresa({ ...datosEmpresa, email_contacto: e.target.value })} required className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-sm text-white focus:ring-1 focus:ring-brand" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-txt-primary mb-1">Teléfono</label>
+                                    <input type="text" value={datosEmpresa.telefono} onChange={e => setDatosEmpresa({ ...datosEmpresa, telefono: e.target.value })} required className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-sm text-white focus:ring-1 focus:ring-brand" />
                                 </div>
                             </div>
 

@@ -183,7 +183,7 @@ const enviarCotizacion = async (req, res) => {
 
         const cotizacion = await prisma.cotizacion.findFirst({
             where: { id: parseInt(id), tenant_id },
-            include: { entidad: true, detalle_cotizaciones: { include: { producto: true, operario: true, equipo: true } } }
+            include: { empresa: true, entidad: true, detalle_cotizaciones: { include: { producto: true, operario: true, equipo: true } } }
         });
 
         if (!cotizacion) return res.status(404).json({ message: "Cotización no encontrada" });
@@ -216,7 +216,7 @@ const previewCotizacion = async (req, res) => {
         const { id } = req.params;
         const cotizacion = await prisma.cotizacion.findFirst({
             where: { id: parseInt(id), tenant_id: req.user.tenant_id },
-            include: { entidad: true, detalle_cotizaciones: { include: { producto: true, operario: true, equipo: true } } }
+            include: { empresa: true, entidad: true, detalle_cotizaciones: { include: { producto: true, operario: true, equipo: true } } }
         });
 
         if (!cotizacion) return res.status(404).json({ message: "Cotización no encontrada" });

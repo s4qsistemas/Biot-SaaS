@@ -347,6 +347,7 @@ const enviarOT = async (req, res) => {
         const ot = await prisma.ordenTrabajo.findFirst({
             where: { id: parseInt(id), tenant_id },
             include: {
+                empresa: true,
                 tareas: { include: { operario: true }, orderBy: { id: 'asc' } },
                 cotizacion: { include: { detalle_cotizaciones: { include: { producto: true, operario: true, equipo: true } } } }
             }

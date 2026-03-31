@@ -21,6 +21,9 @@ model Empresa {
   nombre            String    @db.VarChar(255)
   rut               String    @unique @db.VarChar(20)
   alias             String    @unique @db.VarChar(100)
+  giro              String?   @db.VarChar(255)
+  email_contacto    String?   @db.VarChar(255)
+  telefono          String?   @db.VarChar(50)
   activo            Boolean   @default(true)
   fecha_vencimiento DateTime?
   plan_id           Int?

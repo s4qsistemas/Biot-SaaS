@@ -5,7 +5,7 @@ import api from '../../utils/api';
 export default function ModalCrearMaestranza({ isOpen, onClose, onSubmit }) {
     // ELIMINADO: password_admin
     const [formData, setFormData] = useState({
-        nombre_empresa: '', rut_empresa: '', alias: '', plan_id: '',
+        nombre_empresa: '', rut_empresa: '', alias: '', giro: '', email_contacto: '', telefono: '', plan_id: '',
         nombre_admin: '', email_admin: ''
     });
 
@@ -48,7 +48,7 @@ export default function ModalCrearMaestranza({ isOpen, onClose, onSubmit }) {
         onSubmit(formData);
 
         // Limpiamos el form (sin password_admin)
-        setFormData({ nombre_empresa: '', rut_empresa: '', alias: '', plan_id: '', nombre_admin: '', email_admin: '' });
+        setFormData({ nombre_empresa: '', rut_empresa: '', alias: '', giro: '', email_contacto: '', telefono: '', plan_id: '', nombre_admin: '', email_admin: '' });
     };
 
     if (!isOpen) return null;
@@ -93,6 +93,20 @@ export default function ModalCrearMaestranza({ isOpen, onClose, onSubmit }) {
                                             </option>
                                         ))}
                                     </select>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-3 gap-4">
+                                <div>
+                                    <label className="block text-xs font-medium text-txt-primary mb-1">Giro Comercial</label>
+                                    <input type="text" name="giro" value={formData.giro} onChange={handleChange} required className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-sm text-txt-primary focus:ring-1 focus:ring-brand" placeholder="Servicios Industriales" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-txt-primary mb-1">Email Contacto (PDF)</label>
+                                    <input type="email" name="email_contacto" value={formData.email_contacto} onChange={handleChange} required className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-sm text-txt-primary focus:ring-1 focus:ring-brand" placeholder="contacto@empresa.com" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-txt-primary mb-1">Teléfono (PDF)</label>
+                                    <input type="text" name="telefono" value={formData.telefono} onChange={handleChange} required className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-sm text-txt-primary focus:ring-1 focus:ring-brand" placeholder="+56 9 1234 5678" />
                                 </div>
                             </div>
                         </div>

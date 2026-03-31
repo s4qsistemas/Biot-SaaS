@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 
 const crearMaestranza = async (req, res) => {
     try {
-        const { nombre_empresa, rut_empresa, alias, nombre_admin, email_admin, password_admin, plan_id } = req.body;
+        const { nombre_empresa, rut_empresa, alias, nombre_admin, email_admin, password_admin, plan_id, giro, email_contacto, telefono } = req.body;
 
         if (!nombre_empresa || !rut_empresa || !alias || !email_admin || !plan_id) {
             return res.status(400).json({ message: 'Faltan campos obligatorios.' });
@@ -57,6 +57,9 @@ const crearMaestranza = async (req, res) => {
                     nombre: nombre_empresa,
                     rut: rutFormateado,
                     alias: alias,
+                    giro: giro || null,
+                    email_contacto: email_contacto || null,
+                    telefono: telefono || null,
                     activo: true,
                     plan_id: parseInt(plan_id),
                     fecha_vencimiento: fechaVencimiento
@@ -127,6 +130,9 @@ const obtenerMaestranzas = async (req, res) => {
                 estado: emp.activo ? 'activa' : 'suspendida',
                 plan_id: emp.plan_id || '',
                 plan_nombre: emp.plan?.nombre || 'Sin Plan',
+                giro: emp.giro || '',
+                email_contacto: emp.email_contacto || '',
+                telefono: emp.telefono || '',
                 fecha_vencimiento: emp.fecha_vencimiento,
                 dias_restantes: dias_restantes,
                 admin_id: emp.usuarios[0]?.id || null, // 👈 CORRECCIÓN A PLURAL
@@ -270,7 +276,7 @@ const cambiarPlanEmpresa = async (req, res) => {
 const editarDatosEmpresa = async (req, res) => {
     try {
         const { id } = req.params;
-        const { nombre_empresa, alias } = req.body;
+        const { nombre_empresa, alias, giro, email_contacto, telefono } = req.body;
 
         const existeAlias = await prisma.empresa.findFirst({
             where: { alias, NOT: { id: parseInt(id) } }
@@ -283,7 +289,13 @@ const editarDatosEmpresa = async (req, res) => {
 
         await prisma.empresa.update({
             where: { id: parseInt(id) },
-            data: { nombre: nombre_empresa, alias: alias }
+            data: { 
+                nombre: nombre_empresa, 
+                alias: alias,
+                giro: giro || null,
+                email_contacto: email_contacto || null,
+                telefono: telefono || null
+            }
         });
 
         res.json({ ok: true, message: 'Datos básicos de la empresa actualizados.' });

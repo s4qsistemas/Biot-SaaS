@@ -51,12 +51,12 @@ const generarTemplateCotizacion = (cotizacion) => {
     <body>
         <div class="container">
             <div class="header">
-                <div class="logo-placeholder">BIOT</div>
+                <div class="logo-placeholder">${cotizacion.empresa?.alias?.toUpperCase() || cotizacion.empresa?.nombre || 'BIOT'}</div>
                 <div class="company-info">
-                    <strong>BIOT SpA</strong><br>
-                    Servicios y Mantenimiento Industrial<br>
-                    RUT: 76.xxx.xxx-K<br>
-                    contacto@biot.cl | +56 9 1234 5678
+                    <strong>${cotizacion.empresa?.nombre || 'BIOT SpA'}</strong><br>
+                    ${cotizacion.empresa?.giro || 'Servicios y Mantenimiento Industrial'}<br>
+                    RUT: ${cotizacion.empresa?.rut || '76.xxx.xxx-K'}<br>
+                    ${cotizacion.empresa?.email_contacto || 'contacto@biot.cl'} | ${cotizacion.empresa?.telefono || '+56 9 1234 5678'}
                 </div>
             </div>
 
@@ -192,7 +192,7 @@ const generarTemplateOT = (ot) => {
     <body>
         <div class="container">
             <div class="header">
-                <div class="logo-placeholder">BIOT</div>
+                <div class="logo-placeholder">${ot.empresa?.alias?.toUpperCase() || ot.empresa?.nombre || 'BIOT'}</div>
                 <div class="ot-badge">DOCUMENTO INTERNO TALLER</div>
             </div>
 
