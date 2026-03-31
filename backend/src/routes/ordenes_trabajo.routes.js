@@ -15,7 +15,7 @@ router.post('/:id/enviar', authorize(PERMISOS.OT_TALLER_OPERAR), controller.envi
 router.patch('/:id/tareas/:tareaId/estado', authorize(PERMISOS.OT_TALLER_OPERAR), controller.actualizarEstadoTarea);
 
 router.patch('/:id/estado', authorize(PERMISOS.OT_GESTION_MAESTRA), controller.actualizarEstadoOT);
-router.patch('/:id/horario', authorize(PERMISOS.OT_GESTION_MAESTRA), controller.actualizarHorarioOT);
+router.patch('/:id/horario', authorize(PERMISOS.OT_MODIFICAR_HORARIO), controller.actualizarHorarioOT);
 
 // Gestión de tareas y extornos
 router.delete('/:id/tareas/:tareaId', authorize(PERMISOS.OT_TALLER_OPERAR), controller.eliminarTarea);

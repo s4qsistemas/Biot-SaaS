@@ -516,9 +516,11 @@ const OrdenesTrabajo = () => {
                         <div className="flex px-6 pt-4 border-b border-dark-border bg-dark-surface overflow-x-auto custom-scrollbar">
                             {puedeVerFinanzas && <button onClick={() => setActiveTab('resumen')} className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === 'resumen' ? 'border-brand text-brand' : 'border-transparent text-txt-secondary hover:text-white'}`}>Resumen Comercial</button>}
 
-                            <button onClick={() => setActiveTab('tareas')} className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${activeTab === 'tareas' ? 'border-brand text-brand' : 'border-transparent text-txt-secondary hover:text-white'}`}>
-                                Tareas de Taller <span className="bg-dark-bg border border-dark-border text-txt-secondary px-1.5 py-0.5 rounded text-[10px]">{selectedOT.tareas?.length || 0}</span>
-                            </button>
+                            {user?.rol !== 'administrativo' && (
+                                <button onClick={() => setActiveTab('tareas')} className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${activeTab === 'tareas' ? 'border-brand text-brand' : 'border-transparent text-txt-secondary hover:text-white'}`}>
+                                    Tareas de Taller <span className="bg-dark-bg border border-dark-border text-txt-secondary px-1.5 py-0.5 rounded text-[10px]">{selectedOT.tareas?.length || 0}</span>
+                                </button>
+                            )}
 
                             {puedeVerFinanzas && (
                                 <button onClick={() => setActiveTab('costos')} className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${activeTab === 'costos' ? 'border-amber-500 text-amber-500' : 'border-transparent text-txt-secondary hover:text-white'}`}>
@@ -642,7 +644,7 @@ const OrdenesTrabajo = () => {
                             })()}
 
                             {/* PESTAÑA TAREAS (TALLER) */}
-                            {activeTab === 'tareas' && (
+                            {activeTab === 'tareas' && user?.rol !== 'administrativo' && (
                                 <div className="space-y-4">
                                     <div className="flex justify-between items-center mb-4">
                                         <h4 className="text-sm font-bold text-white uppercase tracking-wider">Ruta de Fabricación</h4>
@@ -855,7 +857,7 @@ const OrdenesTrabajo = () => {
                             )}
 
                             {activeTab === 'horarios' && puedeGestionarOT && (
-                                <ConfiguracionHorarioOT ot={selectedOT} onUpdate={cargarOTs} />
+                                <ConfiguracionHorarioOT ot={selectedOT} onUpdate={cargarOTs} readOnly={user?.rol === 'administrativo'} />
                             )}
                         </div>
                     </div>
