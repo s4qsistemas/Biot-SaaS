@@ -43,15 +43,7 @@ export default function SuperAdminDashboard() {
         }
     };
 
-    const handleCrearMaestranza = async (datos) => {
-        try {
-            await api.post('/api/superadmin/empresa', datos);
-            setIsModalCrearOpen(false);
-            cargarEmpresas();
-        } catch (error) {
-            alert(error.response?.data?.message || 'Error al crear empresa');
-        }
-    };
+    // Se delegará la creación al ModalCrearMaestranza.
 
     const abrirModalEdicion = (empresa) => {
         setEmpresaAEditar(empresa);
@@ -230,7 +222,7 @@ export default function SuperAdminDashboard() {
                 </div>
             </section>
 
-            <ModalCrearMaestranza isOpen={isModalCrearOpen} onClose={() => setIsModalCrearOpen(false)} onSubmit={handleCrearMaestranza} />
+            <ModalCrearMaestranza isOpen={isModalCrearOpen} onClose={() => setIsModalCrearOpen(false)} onUpdateSuccess={cargarEmpresas} />
             <ModalEditarMaestranza isOpen={isModalEditarOpen} onClose={() => setIsModalEditarOpen(false)} empresaData={empresaAEditar} onUpdateSuccess={cargarEmpresas} />
             <ModalGestionPlanes isOpen={isModalPlanesOpen} onClose={() => setIsModalPlanesOpen(false)} />
             <ModalCambiarPlan isOpen={isModalCambiarPlanOpen} onClose={() => setIsModalCambiarPlanOpen(false)} empresaData={empresaAEditar} onUpdateSuccess={cargarEmpresas} />

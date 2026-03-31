@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { formatRut, validateRut } from '../../utils/rut';
 import api from '../../utils/api';
 
-export default function ModalCrearMaestranza({ isOpen, onClose, onSubmit }) {
-    // ELIMINADO: password_admin
+export default function ModalCrearMaestranza({ isOpen, onClose, onUpdateSuccess }) {
+    const [cargando, setCargando] = useState(false);
+    const [mensaje, setMensaje] = useState({ tipo: '', texto: '', password_generica: '' });
     const [formData, setFormData] = useState({
         nombre_empresa: '', rut_empresa: '', alias: '', giro: '', email_contacto: '', telefono: '', plan_id: '',
         nombre_admin: '', email_admin: ''
@@ -37,7 +38,7 @@ export default function ModalCrearMaestranza({ isOpen, onClose, onSubmit }) {
         setFormData({ ...formData, [name]: value });
     };
 
-    const handleFormSubmit = (e) => {
+    const handleFormSubmit = async (e) => {
         e.preventDefault();
 
         if (!validateRut(formData.rut_empresa)) {
@@ -45,10 +46,27 @@ export default function ModalCrearMaestranza({ isOpen, onClose, onSubmit }) {
             return;
         }
 
-        onSubmit(formData);
+        setCargando(true);
+        setMensaje({ tipo: '', texto: '' });
 
-        // Limpiamos el form (sin password_admin)
-        setFormData({ nombre_empresa: '', rut_empresa: '', alias: '', giro: '', email_contacto: '', telefono: '', plan_id: '', nombre_admin: '', email_admin: '' });
+        try {
+            const { data } = await api.post('/api/superadmin/empresa', formData);
+            setMensaje({ tipo: 'éxito', texto: `Maestranza creada con éxito.`, password_generica: data.password_generica });
+            
+            // Limpiamos el form
+            setFormData({ nombre_empresa: '', rut_empresa: '', alias: '', giro: '', email_contacto: '', telefono: '', plan_id: '', nombre_admin: '', email_admin: '' });
+            
+            // Refrescar padre
+            if (onUpdateSuccess) onUpdateSuccess();
+
+        } catch (error) {
+            setMensaje({ 
+                tipo: 'error', 
+                texto: error.response?.data?.message || 'Error al crear la maestranza.' 
+            });
+        } finally {
+            setCargando(false);
+        }
     };
 
     if (!isOpen) return null;
@@ -62,7 +80,27 @@ export default function ModalCrearMaestranza({ isOpen, onClose, onSubmit }) {
                 </div>
 
                 <form onSubmit={handleFormSubmit} className="p-6">
-                    <div className="grid grid-cols-1 gap-6">
+                    {mensaje.texto && mensaje.tipo === 'error' && (
+                        <div className="mb-4 p-3 rounded-lg text-sm border font-medium bg-red-900/10 border-red-500/30 text-red-400">
+                            {mensaje.texto}
+                        </div>
+                    )}
+
+                    {mensaje.texto && mensaje.tipo === 'éxito' && (
+                        <div className="mb-4 p-5 rounded-lg text-sm border font-medium bg-emerald-900/10 border-emerald-500/30">
+                            <h4 className="text-emerald-400 font-bold mb-3 text-lg">¡{mensaje.texto}!</h4>
+                            <p className="text-slate-300 mb-4 leading-relaxed">
+                                La maestranza ha sido registrada y el Administrador creado. Por favor, comparte la siguiente contraseña temporal con el cliente. <br />
+                                <strong>El usuario será forzado a cambiarla inmediatamente en su primer ingreso.</strong>
+                            </p>
+                            <div className="bg-dark-bg border border-dark-border p-4 rounded-md text-center shadow-inner">
+                                <span className="font-mono text-2xl tracking-widest text-emerald-400 select-all">{mensaje.password_generica}</span>
+                            </div>
+                        </div>
+                    )}
+
+                    {!mensaje.password_generica && (
+                        <div className="grid grid-cols-1 gap-6">
 
                         {/* EMPRESA */}
                         <div className="space-y-4">
@@ -134,10 +172,17 @@ export default function ModalCrearMaestranza({ isOpen, onClose, onSubmit }) {
                             </div>
                         </div>
                     </div>
+                    )}
 
                     <div className="mt-8 flex justify-end gap-3 pt-4 border-t border-dark-border">
-                        <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-txt-secondary bg-dark-bg border border-dark-border rounded-lg hover:bg-dark-surface transition-colors">Cancelar</button>
-                        <button type="submit" className="px-6 py-2 text-sm font-medium text-white bg-brand rounded-lg hover:bg-brand-dark transition-colors">Crear Maestranza</button>
+                        <button type="button" disabled={cargando} onClick={() => { setMensaje({ tipo: '', texto: '' }); onClose(); }} className="px-4 py-2 text-sm font-medium text-txt-secondary bg-dark-bg border border-dark-border rounded-lg hover:bg-dark-surface transition-colors">
+                            {mensaje.password_generica ? 'Cerrar Panel' : 'Cancelar'}
+                        </button>
+                        {!mensaje.password_generica && (
+                            <button type="submit" disabled={cargando} className="px-6 py-2 text-sm font-medium text-white bg-brand rounded-lg hover:bg-brand-dark transition-colors flex items-center justify-center min-w-[150px] disabled:opacity-50">
+                                {cargando ? 'Registrando...' : 'Crear Maestranza'}
+                            </button>
+                        )}
                     </div>
                 </form>
             </div>

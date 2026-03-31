@@ -93,7 +93,7 @@ const crearMaestranza = async (req, res) => {
             return { empresa, admin };
         });
 
-        res.status(201).json({ ok: true, message: 'Maestranza creada con éxito' });
+        res.status(201).json({ ok: true, message: 'Maestranza creada con éxito', password_generica: passwordFinal });
 
     } catch (error) {
         console.error('Error al crear maestranza:', error);

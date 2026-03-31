@@ -9,7 +9,7 @@ const { ROLES } = require('../config/permissions');
 const registrarEmpleado = async (req, res) => {
     try {
         const tenant_id = req.user.tenant_id; // INYECCIÓN SAAS: El creador define la jaula
-        const { nombre, email, password, rol } = req.body;
+        const { nombre, email, rol } = req.body;
 
         // 1. Validar que el Admin no intente crear a otro Admin o a un Super Admin (Escalamiento de privilegios)
         const rolesPermitidosParaCrear = [ROLES.GERENTE, ROLES.JEFE_TALLER, ROLES.ADMINISTRATIVO, ROLES.OPERARIO];
@@ -18,8 +18,9 @@ const registrarEmpleado = async (req, res) => {
             return res.status(403).json({ message: "No tiene permisos para crear usuarios con este nivel de acceso." });
         }
 
-        // 2. Encriptar contraseña
-        const hashedPassword = await hashPassword(password);
+        // 2. Encriptar contraseña genérica
+        const passwordGenerica = process.env.DEFAULT_PASSWORD || 'BiotSaaS2026*';
+        const hashedPassword = await hashPassword(passwordGenerica);
 
         // 3. Crear empleado
         const nuevoEmpleado = await prisma.usuario.create({
@@ -28,13 +29,14 @@ const registrarEmpleado = async (req, res) => {
                 nombre: nombre,
                 email: email,
                 password: hashedPassword,
-                rol: rol
+                rol: rol,
+                debe_cambiar_password: true // Forzar cambio en primer login
             },
             // Excluimos la contraseña de la respuesta por seguridad
             select: { id: true, nombre: true, email: true, rol: true, activo: true }
         });
 
-        res.status(201).json({ message: 'Empleado registrado con éxito', data: nuevoEmpleado });
+        res.status(201).json({ message: 'Empleado registrado con éxito', password_generica: passwordGenerica, data: nuevoEmpleado });
 
     } catch (error) {
         console.error("Error al registrar empleado:", error);

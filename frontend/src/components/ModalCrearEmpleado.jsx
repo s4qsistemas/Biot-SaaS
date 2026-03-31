@@ -3,7 +3,7 @@ import api from '../utils/api';
 
 export default function ModalCrearEmpleado({ isOpen, onClose }) {
     const [formData, setFormData] = useState({
-        nombre: '', email: '', password: '', rol: 'operario'
+        nombre: '', email: '', rol: 'operario'
     });
     const [cargando, setCargando] = useState(false);
     const [mensaje, setMensaje] = useState({ tipo: '', texto: '' });
@@ -20,17 +20,14 @@ export default function ModalCrearEmpleado({ isOpen, onClose }) {
         setMensaje({ tipo: '', texto: '' });
 
         try {
-            await api.post('/api/usuarios/empleado', formData);
-            setMensaje({ tipo: 'éxito', texto: 'Empleado registrado con éxito. Ya puede iniciar sesión.' });
+            const { data } = await api.post('/api/usuarios/empleado', formData);
+            setMensaje({ tipo: 'éxito', texto: `Empleado registrado con éxito.`, password_generica: data.password_generica });
             
             // Limpia el formulario
-            setFormData({ nombre: '', email: '', password: '', rol: 'operario' });
+            setFormData({ nombre: '', email: '', rol: 'operario' });
             
-            // Cierra el modal después de 2 segundos para que el usuario pueda leer el mensaje de éxito
-            setTimeout(() => {
-                onClose();
-                setMensaje({ tipo: '', texto: '' });
-            }, 2000);
+            // Recargamos el listado (opcional si onSubmit pasa por props pero aquí no se ve, 
+            // no hacemos el close automatico para que lea la clave, debe cerrarlo manual)
             
         } catch (error) {
             setMensaje({ 
@@ -51,25 +48,32 @@ export default function ModalCrearEmpleado({ isOpen, onClose }) {
                 </div>
 
                 <form onSubmit={handleFormSubmit} className="p-6 space-y-4">
-                    {mensaje.texto && (
-                        <div className={`p-3 rounded-lg text-sm border font-medium ${mensaje.tipo === 'error' ? 'bg-red-900/10 border-red-500/30 text-red-400' : 'bg-emerald-900/10 border-emerald-500/30 text-emerald-400'}`}>
+                    {mensaje.texto && mensaje.tipo === 'error' && (
+                        <div className="p-3 rounded-lg text-sm border font-medium bg-red-900/10 border-red-500/30 text-red-400">
                             {mensaje.texto}
                         </div>
                     )}
 
-                    <div>
-                        <label className="block text-xs font-medium text-txt-primary mb-1">Nombre Completo</label>
-                        <input type="text" name="nombre" value={formData.nombre} onChange={handleChange} required className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-sm text-white focus:ring-1 focus:ring-brand" placeholder="Ej: Juan Pérez" />
-                    </div>
+                    {mensaje.texto && mensaje.tipo === 'éxito' && (
+                        <div className="p-4 rounded-lg text-sm border font-medium bg-emerald-900/10 border-emerald-500/30">
+                            <h4 className="text-emerald-400 font-bold mb-2">¡{mensaje.texto}!</h4>
+                            <p className="text-slate-300 mb-2">Comparta la siguiente contraseña temporal con el usuario. El sistema le forzará a cambiarla en su primer acceso:</p>
+                            <div className="bg-dark-bg border border-dark-border p-3 rounded-md text-center">
+                                <span className="font-mono text-xl tracking-widest text-emerald-400 select-all">{mensaje.password_generica}</span>
+                            </div>
+                        </div>
+                    )}
+
+                    {!mensaje.password_generica && (
+                        <>
+                        <div>
+                            <label className="block text-xs font-medium text-txt-primary mb-1">Nombre Completo</label>
+                            <input type="text" name="nombre" value={formData.nombre} onChange={handleChange} required className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-sm text-white focus:ring-1 focus:ring-brand" placeholder="Ej: Juan Pérez" />
+                        </div>
                     
                     <div>
                         <label className="block text-xs font-medium text-txt-primary mb-1">Correo Electrónico</label>
                         <input type="email" name="email" value={formData.email} onChange={handleChange} required className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-sm text-white focus:ring-1 focus:ring-brand" placeholder="juan@empresa.cl" />
-                    </div>
-
-                    <div>
-                        <label className="block text-xs font-medium text-txt-primary mb-1">Contraseña de acceso inicial</label>
-                        <input type="password" name="password" value={formData.password} onChange={handleChange} required minLength={6} className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-sm text-white focus:ring-1 focus:ring-brand" placeholder="Debe tener al menos 6 caracteres" />
                     </div>
 
                     <div>
@@ -82,11 +86,24 @@ export default function ModalCrearEmpleado({ isOpen, onClose }) {
                         </select>
                     </div>
 
+                    <div className="mt-2 p-3 bg-blue-900/20 border border-blue-500/30 rounded-lg flex items-start gap-3">
+                        <span className="text-blue-400 mt-0.5">ℹ️</span>
+                        <p className="text-xs text-blue-200/80 leading-relaxed">
+                            <strong>Privacidad por diseño:</strong> La contraseña inicial será la clave genérica del sistema. El usuario será forzado a crear su propia contraseña al iniciar sesión por primera vez.
+                        </p>
+                    </div>
+                    </>
+                    )}
+
                     <div className="mt-8 flex justify-end gap-3 pt-4 border-t border-dark-border">
-                        <button type="button" disabled={cargando} onClick={onClose} className="px-4 py-2 text-sm text-txt-secondary hover:text-white disabled:opacity-50 transition-colors">Cancelar</button>
-                        <button type="submit" disabled={cargando} className="px-6 py-2 text-sm font-bold text-white bg-brand rounded-lg hover:bg-brand-dark disabled:opacity-50 transition-colors flex items-center justify-center min-w-[140px]">
-                            {cargando ? 'Guardando...' : 'Crear Cuenta'}
+                        <button type="button" disabled={cargando} onClick={() => { setMensaje({ tipo: '', texto: '' }); onClose(); }} className="px-4 py-2 text-sm text-txt-secondary hover:text-white disabled:opacity-50 transition-colors">
+                            {mensaje.password_generica ? 'Cerrar Panel' : 'Cancelar'}
                         </button>
+                        {!mensaje.password_generica && (
+                            <button type="submit" disabled={cargando} className="px-6 py-2 text-sm font-bold text-white bg-brand rounded-lg hover:bg-brand-dark disabled:opacity-50 transition-colors flex items-center justify-center min-w-[140px]">
+                                {cargando ? 'Guardando...' : 'Crear Cuenta'}
+                            </button>
+                        )}
                     </div>
                 </form>
             </div>
