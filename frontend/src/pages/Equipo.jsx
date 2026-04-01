@@ -52,7 +52,7 @@ export default function Equipo() {
                         <UserCog className="text-brand" size={32} />
                         Mi Equipo
                     </h1>
-                    <p className="text-txt-secondary mt-1">Gestión del personal y accesos de tu maestranza.</p>
+                    <p className="text-txt-secondary mt-1">Gestión del personal y accesos de tu empresa.</p>
                 </div>
             </header>
 
@@ -86,7 +86,7 @@ export default function Equipo() {
                             ) : (
                                 equipo.map((empleado) => {
                                     const esSuperior = empleado.rol === 'admin' || empleado.rol === 'super_admin';
-                                    
+
                                     return (
                                         <tr key={empleado.id} className={`hover:bg-brand/10 transition-colors group ${!empleado.activo ? 'opacity-60' : ''}`}>
                                             <td className="p-4">
@@ -148,11 +148,11 @@ export default function Equipo() {
                 </div>
             </section>
 
-            <ModalEditarEmpleado 
-                isOpen={isModalEditarOpen} 
-                onClose={() => setIsModalEditarOpen(false)} 
-                empleadoData={empleadoAEditar} 
-                onUpdateSuccess={cargarEquipo} 
+            <ModalEditarEmpleado
+                isOpen={isModalEditarOpen}
+                onClose={() => setIsModalEditarOpen(false)}
+                empleadoData={empleadoAEditar}
+                onUpdateSuccess={cargarEquipo}
             />
         </div>
     );

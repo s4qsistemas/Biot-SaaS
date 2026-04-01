@@ -11,7 +11,7 @@ export default function CambiarClave() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  
+
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -32,7 +32,7 @@ export default function CambiarClave() {
     setLoading(true);
     try {
       await api.post('/api/auth/cambiar-clave', { nueva_password: password });
-      
+
       // Forzamos actualización de la vista y sacamos al usuario al dashboard
       // El backend ya quitó la flag en la BD, necesitamos recargar para que AuthContext 
       // vuelva a hacer el fetch /api/auth/me y baje los datos nuevos sin la bandera
@@ -48,17 +48,17 @@ export default function CambiarClave() {
     <div className="min-h-screen bg-dark-bg flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
         <div className="mx-auto w-16 h-16 bg-brand/10 rounded-full flex items-center justify-center mb-4">
-            <span className="text-3xl text-brand">🔒</span>
+          <span className="text-3xl text-brand">🔒</span>
         </div>
         <h2 className="text-2xl font-extrabold text-white">Seguridad de la Cuenta</h2>
         <p className="mt-2 text-sm text-txt-secondary">
-          Hola {user?.nombre}, por seguridad debes cambiar la contraseña temporal asignada a tu maestranza para poder acceder al sistema.
+          Hola {user?.nombre}, por seguridad debes cambiar la contraseña temporal asignada a tu empresa para poder acceder al sistema.
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-dark-surface py-8 px-4 shadow-xl border border-brand/30 sm:rounded-2xl sm:px-10 relative overflow-hidden">
-          
+
           {/* Decorative Top Border */}
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-brand to-brand-light"></div>
 
@@ -115,9 +115,9 @@ export default function CambiarClave() {
             </div>
 
             <div>
-                <p className="text-xs text-brand/80 text-center mb-4">
-                    Al confirmar, serás redirigido automáticamente a tu Panel de Control.
-                </p>
+              <p className="text-xs text-brand/80 text-center mb-4">
+                Al confirmar, serás redirigido automáticamente a tu Panel de Control.
+              </p>
               <button
                 type="submit"
                 disabled={loading}

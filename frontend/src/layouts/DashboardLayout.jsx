@@ -60,7 +60,7 @@ export default function DashboardLayout() {
             <div className="flex-shrink-0 flex items-center gap-3">
               <span className="font-extrabold text-xl text-brand tracking-tight">Biot SaaS</span>
               <span className={`px-2 py-0.5 rounded-md border text-[10px] uppercase font-bold tracking-wider hidden sm:block ${isImpersonating ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 'bg-dark-bg text-txt-secondary border-dark-border'}`}>
-                {user?.rol === 'super_admin' ? (isImpersonating ? 'Modo Suplantación' : 'Root Mode') : 'Portal Maestranza'}
+                {user?.rol === 'super_admin' ? (isImpersonating ? 'Modo Suplantación' : 'Root Mode') : 'Portal Empresa'}
               </span>
             </div>
 
@@ -144,11 +144,11 @@ export default function DashboardLayout() {
         </main>
 
       </div>
-      
+
       {/* Modal para Crear Empleado */}
-      <ModalCrearEmpleado 
-          isOpen={isModalEmpleadoOpen} 
-          onClose={() => setIsModalEmpleadoOpen(false)} 
+      <ModalCrearEmpleado
+        isOpen={isModalEmpleadoOpen}
+        onClose={() => setIsModalEmpleadoOpen(false)}
       />
     </div>
   );

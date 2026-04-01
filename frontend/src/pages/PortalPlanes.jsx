@@ -20,7 +20,7 @@ export default function PortalPlanes() {
             <div className="p-8 text-center text-txt-secondary">
                 <span className="text-4xl block mb-4">🔒</span>
                 <h2 className="text-xl font-bold text-white mb-2">Acceso Restringido</h2>
-                <p>Solo el administrador de la maestranza puede gestionar la facturación.</p>
+                <p>Solo el administrador de la empresa puede gestionar la facturación.</p>
                 <button onClick={() => navigate('/dashboard')} className="mt-6 text-brand hover:underline">
                     Volver al Inicio
                 </button>
@@ -58,7 +58,7 @@ export default function PortalPlanes() {
             <div className="mb-8 text-center sm:text-left">
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Suscripción y Planes</h1>
                 <p className="mt-2 text-sm text-txt-secondary">
-                    Gestiona el plan de tu maestranza. Tu plan actual es <span className="text-brand font-bold">{user?.empresa?.plan}</span>.
+                    Gestiona el plan de tu empresa. Tu plan actual es <span className="text-brand font-bold">{user?.empresa?.plan}</span>.
                 </p>
             </div>
 

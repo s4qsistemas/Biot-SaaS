@@ -70,12 +70,12 @@ export default function Register() {
 
                         <div className="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
                             <div className="sm:col-span-2">
-                                <h3 className="text-sm font-bold text-brand border-b border-dark-border pb-2 mb-4">1. Datos de tu Maestranza</h3>
+                                <h3 className="text-sm font-bold text-brand border-b border-dark-border pb-2 mb-4">1. Datos de tu Empresa</h3>
                             </div>
 
                             <div className="sm:col-span-2">
                                 <label className="block text-xs font-medium text-txt-primary mb-1">Razón Social</label>
-                                <input type="text" name="nombre_empresa" value={formData.nombre_empresa} onChange={handleChange} required className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-sm text-txt-primary focus:ring-1 focus:ring-brand" placeholder="Ej: Maestranza SpA" />
+                                <input type="text" name="nombre_empresa" value={formData.nombre_empresa} onChange={handleChange} required className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-sm text-txt-primary focus:ring-1 focus:ring-brand" placeholder="Ej: Empresa SpA" />
                             </div>
 
                             <div>

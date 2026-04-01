@@ -37,7 +37,7 @@ export default function Paywall() {
         // SIMULACIÓN (MVP): Aquí conectaremos el endpoint en el Paso 3
         setTimeout(() => {
             setLoading(false);
-            setMensajeExito('Comprobante enviado con éxito. Nuestro equipo de ventas validará el pago y reactivará la cuenta de tu maestranza a la brevedad.');
+            setMensajeExito('Comprobante enviado con éxito. Nuestro equipo de ventas validará el pago y reactivará la cuenta de tu empresa a la brevedad.');
             setArchivo(null);
         }, 1500);
     };
@@ -54,7 +54,7 @@ export default function Paywall() {
                     {isAdmin ? 'Suscripción Expirada' : 'Acceso Suspendido'}
                 </h2>
                 <p className="mt-3 text-base text-txt-secondary leading-relaxed">
-                    Hola <span className="text-white font-medium">{user?.nombre}</span>. El tiempo de acceso para la maestranza <span className="text-brand font-bold">{user?.empresa?.nombre}</span> ha finalizado.
+                    Hola <span className="text-white font-medium">{user?.nombre}</span>. El tiempo de acceso para la empresa <span className="text-brand font-bold">{user?.empresa?.nombre}</span> ha finalizado.
                 </p>
             </div>
 
@@ -125,7 +125,7 @@ export default function Paywall() {
                             </p>
                             <div className="p-4 bg-orange-900/10 border border-orange-500/30 rounded-lg">
                                 <p className="text-sm font-semibold text-orange-400">
-                                    Por favor, contacta al administrador de tu maestranza para regularizar el acceso.
+                                    Por favor, contacta al administrador de tu empresa para regularizar el acceso.
                                 </p>
                             </div>
                         </div>

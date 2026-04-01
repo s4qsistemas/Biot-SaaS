@@ -86,7 +86,7 @@ export default function SuperAdminDashboard() {
                         <ShieldCheck className="text-brand" size={32} />
                         Panel SaaS
                     </h1>
-                    <p className="text-txt-secondary mt-1">Gestión centralizada de maestranzas y facturación.</p>
+                    <p className="text-txt-secondary mt-1">Gestión centralizada de empresas y facturación.</p>
                 </div>
                 <div className="flex gap-3">
                     <button
@@ -100,7 +100,7 @@ export default function SuperAdminDashboard() {
                         className="bg-brand text-white px-4 py-2 rounded-lg font-medium hover:bg-brand-hover transition-colors shadow-lg shadow-brand/20 flex items-center gap-2"
                     >
                         <Plus size={18} />
-                        Nueva Maestranza
+                        Nueva Empresa
                     </button>
                 </div>
             </header>
@@ -109,7 +109,7 @@ export default function SuperAdminDashboard() {
                 <div className="p-4 border-b border-dark-border bg-dark-bg/50 flex justify-between items-center">
                     <h2 className="text-lg font-semibold text-white flex items-center gap-2">
                         <Building size={20} className="text-txt-secondary" />
-                        Maestranzas Activas
+                        Empresas Activas
                     </h2>
                     <span className="bg-brand/10 text-brand px-3 py-1 rounded-full text-xs font-bold border border-brand/20">
                         Total: {empresas.length}
