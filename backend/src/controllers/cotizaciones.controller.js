@@ -1,6 +1,8 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const { generarTemplateCotizacion } = require('../utils/pdfTemplates');
+const { generarTemplateCotizacionSG } = require('../utils/pdfTemplateSG');
+
 const { generarPdfBase64 } = require('../services/pdf.service');
 const { enviarWebhookN8n } = require('../services/n8n.service');
 
@@ -188,7 +190,11 @@ const enviarCotizacion = async (req, res) => {
 
         if (!cotizacion) return res.status(404).json({ message: "Cotización no encontrada" });
 
-        const htmlContent = generarTemplateCotizacion(cotizacion);
+        const tenantMaestranzaId = parseInt(process.env.TENANT_ID_MAESTRANZA_SG) || 0;
+        const htmlContent = cotizacion.tenant_id === tenantMaestranzaId
+            ? generarTemplateCotizacionSG(cotizacion)
+            : generarTemplateCotizacion(cotizacion);
+
         const pdfBase64 = await generarPdfBase64(htmlContent);
 
         await enviarWebhookN8n({
@@ -225,7 +231,11 @@ const previewCotizacion = async (req, res) => {
         if (['enviada', 'aceptada', 'rechazada'].includes(cotizacion.estado) && cotizacion.pdf_base64) {
             pdfBuffer = Buffer.from(cotizacion.pdf_base64, 'base64');
         } else {
-            const htmlContent = generarTemplateCotizacion(cotizacion);
+            const tenantMaestranzaId = parseInt(process.env.TENANT_ID_MAESTRANZA_SG) || 0;
+            const htmlContent = cotizacion.tenant_id === tenantMaestranzaId
+                ? generarTemplateCotizacionSG(cotizacion)
+                : generarTemplateCotizacion(cotizacion);
+
             const pdfBase64 = await generarPdfBase64(htmlContent);
             pdfBuffer = Buffer.from(pdfBase64, 'base64');
         }
