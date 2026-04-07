@@ -24,7 +24,7 @@ const getCotizacionById = async (req, res) => {
         const { id } = req.params;
         const cotizacion = await prisma.cotizacion.findFirst({
             where: { id: parseInt(id), tenant_id: req.user.tenant_id },
-            include: { detalle_cotizaciones: true, entidad: true }
+            include: { detalle_cotizaciones: true, entidad: true, nave: true, usuario: true }
         });
         if (!cotizacion) return res.status(404).json({ message: 'Cotización no encontrada' });
         res.json(cotizacion);
@@ -36,7 +36,19 @@ const getCotizacionById = async (req, res) => {
 const createCotizacion = async (req, res) => {
     try {
         const tenant_id = req.user.tenant_id;
-        const { entidad_id, cliente_nombre, validez_dias, estado, observaciones, items } = req.body;
+        const { 
+            entidad_id, 
+            cliente_nombre, 
+            validez_dias, 
+            estado, 
+            observaciones, 
+            items,
+            nave_id,
+            solicitud_cotizacion,
+            folio_externo,
+            plazo_entrega,
+            descripcion_general
+        } = req.body;
 
         if (!items || items.length === 0) return res.status(400).json({ message: 'Debe tener al menos un ítem.' });
 
@@ -67,15 +79,29 @@ const createCotizacion = async (req, res) => {
                 tenant_id, entidad_id: parseInt(entidad_id), cliente_nombre,
                 validez_dias: parseInt(validez_dias) || 15, estado: estado || 'borrador',
                 observaciones, monto_neto, monto_iva, monto_total,
+                nave_id: nave_id ? parseInt(nave_id) : null,
+                solicitud_cotizacion,
+                folio_externo,
+                plazo_entrega,
+                descripcion_general,
+                usuario_id: req.user.id, // 👈 Se guarda quién la creó
                 detalle_cotizaciones: { create: detallesData }
             }
         });
-
         const folioGenerado = `COT-${String(nuevaCotizacion.id).padStart(4, '0')}`;
+        
+        // Obtenemos los datos actuales de usuario/empresa para snapshot si se requiere (opcional)
+        const usuarioActual = await prisma.usuario.findFirst({ where: { id: req.user.id } });
+        const empresaActual = await prisma.empresa.findFirst({ where: { id: tenant_id } });
+
         const cotizacionFinal = await prisma.cotizacion.update({
             where: { id: nuevaCotizacion.id },
-            data: { folio: folioGenerado },
-            include: { detalle_cotizaciones: true }
+            data: { 
+                folio: folioGenerado,
+                firma_url: usuarioActual?.firma_url, // Snapshot
+                logo_url: empresaActual?.logo_url   // Snapshot
+            },
+            include: { detalle_cotizaciones: true, usuario: true, empresa: true }
         });
 
         res.status(201).json({ message: 'Cotización creada', data: cotizacionFinal });
@@ -132,7 +158,18 @@ const updateCotizacion = async (req, res) => {
     try {
         const { id } = req.params;
         const tenant_id = req.user.tenant_id;
-        const { entidad_id, cliente_nombre, validez_dias, observaciones, items } = req.body;
+        const { 
+            entidad_id, 
+            cliente_nombre, 
+            validez_dias, 
+            observaciones, 
+            items,
+            nave_id,
+            solicitud_cotizacion,
+            folio_externo,
+            plazo_entrega,
+            descripcion_general
+        } = req.body;
 
         const existe = await prisma.cotizacion.findFirst({ where: { id: parseInt(id), tenant_id } });
         if (!existe) return res.status(404).json({ message: 'Cotización no encontrada' });
@@ -164,6 +201,11 @@ const updateCotizacion = async (req, res) => {
                 data: {
                     entidad_id: parseInt(entidad_id), cliente_nombre, validez_dias: parseInt(validez_dias),
                     observaciones, monto_neto, monto_iva, monto_total,
+                    nave_id: nave_id ? parseInt(nave_id) : null,
+                    solicitud_cotizacion,
+                    folio_externo,
+                    plazo_entrega,
+                    descripcion_general,
                     detalle_cotizaciones: { create: detallesData }
                 }
             })
@@ -185,7 +227,13 @@ const enviarCotizacion = async (req, res) => {
 
         const cotizacion = await prisma.cotizacion.findFirst({
             where: { id: parseInt(id), tenant_id },
-            include: { empresa: true, entidad: true, detalle_cotizaciones: { include: { producto: true, operario: true, equipo: true } } }
+            include: { 
+                empresa: true, 
+                entidad: true, 
+                nave: true,
+                usuario: true,
+                detalle_cotizaciones: { include: { producto: true, operario: true, equipo: true } } 
+            }
         });
 
         if (!cotizacion) return res.status(404).json({ message: "Cotización no encontrada" });
@@ -222,7 +270,13 @@ const previewCotizacion = async (req, res) => {
         const { id } = req.params;
         const cotizacion = await prisma.cotizacion.findFirst({
             where: { id: parseInt(id), tenant_id: req.user.tenant_id },
-            include: { empresa: true, entidad: true, detalle_cotizaciones: { include: { producto: true, operario: true, equipo: true } } }
+            include: { 
+                empresa: true, 
+                entidad: true, 
+                nave: true,
+                usuario: true,
+                detalle_cotizaciones: { include: { producto: true, operario: true, equipo: true } } 
+            }
         });
 
         if (!cotizacion) return res.status(404).json({ message: "Cotización no encontrada" });

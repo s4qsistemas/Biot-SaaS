@@ -134,7 +134,7 @@ const generarTemplateCotizacionSG = (cotizacion) => {
             }
             .info-right {
                 flex: 0 0 250px;
-                padding: 5px 10px;
+                padding: 0 10px 5px 10px; /* 👈 Quitamos el padding superior facilitando el "borde" */
                 text-align: center;
                 position: relative;
             }
@@ -161,13 +161,18 @@ const generarTemplateCotizacionSG = (cotizacion) => {
                 flex-direction: column;
                 justify-content: flex-end;
                 align-items: center;
+                position: relative; /* 👈 Fundamental para el posicionamiento absoluto de la firma */
             }
             .signature-stamp {
                 position: absolute;
-                top: 5px;
-                right: 40px;
-                width: 120px;
-                opacity: 0.8;
+                top: 5px;   /* 👈 Pegado al borde superior del div */
+                left: 50%;
+                transform: translateX(-50%);
+                width: 170px; /* 👈 Un poco más grande */
+                max-height: 90px;
+                opacity: 0.95;
+                z-index: 1;
+                object-fit: contain;
             }
             .firm {
                 font-weight: bold;
@@ -175,6 +180,8 @@ const generarTemplateCotizacionSG = (cotizacion) => {
                 border-top: 1px solid #000;
                 padding-top: 2px;
                 width: 180px;
+                position: relative; /* 👈 Para que el z-index funcione */
+                z-index: 2;         /* 👈 Sobre la firma */
             }
             .preparada-por {
                 font-size: 9px;
@@ -254,7 +261,7 @@ const generarTemplateCotizacionSG = (cotizacion) => {
         <!-- HEADER -->
         <div class="header-top">
             <div class="header-logo">
-                <img src="${cotizacion.empresa?.imagen_url || 'logo_sg.png'}" alt="Logo">
+                <img src="${cotizacion.empresa?.logo_url || cotizacion.empresa?.imagen_url || 'logo_sg.png'}" alt="Logo">
             </div>
             <div class="header-company">
                 ${cotizacion.empresa?.nombre || 'Maestranza SG LTDA'}
@@ -262,7 +269,7 @@ const generarTemplateCotizacionSG = (cotizacion) => {
             <div class="header-ref">
                 <div><span class="doc-type">COTIZACIÓN</span> <span class="doc-num">${cotizacion.folio || '---'}</span></div>
                 <div class="solicitud-box">
-                    Solicitud de Cotización: <span>${cotizacion.folio_externo || '3024260093R02'}</span>
+                    Solicitud de Cotización: <span>${cotizacion.solicitud_cotizacion || cotizacion.folio_externo || '---'}</span>
                 </div>
             </div>
         </div>
@@ -284,8 +291,9 @@ const generarTemplateCotizacionSG = (cotizacion) => {
                 <div class="info-row"><div class="info-label">E-MAIL</div><div class="info-dots">:</div><div class="info-val">${cotizacion.empresa?.email_contacto || '---'}</div></div>
             </div>
             <div class="info-right">
-                <!-- Signature Area Mockup -->
+                <!-- Signature Area -->
                 <div class="signature-area">
+                    ${(cotizacion.usuario?.firma_url || cotizacion.firma_url) ? `<img src="${cotizacion.usuario?.firma_url || cotizacion.firma_url}" class="signature-stamp" alt="Firma">` : ''}
                     <div class="firm">
                         ${cotizacion.usuario?.nombre?.toUpperCase() || 'SERGIO GUZMÁN A.'}<br>
                         ${cotizacion.usuario?.cargo || 'GERENTE GENERAL'}
@@ -310,12 +318,16 @@ const generarTemplateCotizacionSG = (cotizacion) => {
 
         <!-- NAVIGATION INFO -->
         <div class="nav-info">
-            <div class="info-row"><div class="info-label">NAVE / EQUIPO</div><div class="info-dots">:</div><div class="info-val">${cotizacion.nave_equipo || '---'}</div></div>
+            <div class="info-row">
+                <div class="info-label">${cotizacion.empresa?.modulo_naves_activo ? 'NAVE' : 'NAVE / EQUIPO'}</div>
+                <div class="info-dots">:</div>
+                <div class="info-val">${cotizacion.nave?.nombre || cotizacion.nave_equipo || '---'}</div>
+            </div>
             <div style="margin-top: 5px;">
                 <div class="info-row">
                     <div class="info-label" style="width: 100px;">DESCRIPCION GENERAL</div>
                     <div class="info-dots">:</div>
-                    <div class="info-val">${cotizacion.observaciones || '---'}</div>
+                    <div class="info-val">${cotizacion.descripcion_general || cotizacion.observaciones || '---'}</div>
                 </div>
             </div>
         </div>

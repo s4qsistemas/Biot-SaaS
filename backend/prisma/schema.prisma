@@ -29,6 +29,7 @@ model Empresa {
   modulo_naves_activo Boolean?  @default(false)
   fecha_vencimiento   DateTime?
   plan_id             Int?
+  logo_url            String?   @db.Text
   plan                Plan?     @relation(fields: [plan_id], references: [id])
   created_at          DateTime  @default(now()) @db.Timestamp(6)
   updated_at          DateTime  @updatedAt @db.Timestamp(6)
@@ -71,14 +72,17 @@ model Usuario {
   password              String
   nombre                String
   rol                   Rol      @default(operario)
+  cargo                 String?  @db.VarChar(100)
   activo                Boolean  @default(true)
   debe_cambiar_password Boolean  @default(false)
+  firma_url             String?  @db.Text
   created_at            DateTime @default(now())
   updated_at            DateTime @updatedAt
 
   empresa               Empresa            @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
   movimientos           Movimiento[]
   auditorias_realizadas AuditoriaEmpresa[]
+  cotizaciones          Cotizacion[] // 👈 Relación inversa
 }
 
 model Entidad {
@@ -203,6 +207,8 @@ model Cotizacion {
   empresa              Empresa             @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
   entidad              Entidad             @relation(fields: [entidad_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   nave                 Nave?               @relation(fields: [nave_id], references: [id], onDelete: NoAction, onUpdate: NoAction) // 👈 Nueva relación
+  usuario_id           Int?                // 👈 Quién preparó la cotización
+  usuario              Usuario?            @relation(fields: [usuario_id], references: [id])
   detalle_cotizaciones DetalleCotizacion[]
   ordenes_trabajo      OrdenTrabajo[]
 

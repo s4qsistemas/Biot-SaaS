@@ -2,7 +2,7 @@ import { useAuth } from '../context/AuthContext';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard, FileText, Package, Wrench,
-    Users, BookOpen, LogOut, ChevronLeft, Menu, ArrowLeft, UserCog, Ship
+    Users, BookOpen, LogOut, ChevronLeft, Menu, ArrowLeft, UserCog, Ship, Settings
 } from 'lucide-react';
 
 import { tienePermiso, PERMISOS_FRONT } from "../config/permissions";
@@ -14,6 +14,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
 
     const isImpersonating = !!localStorage.getItem('super_admin_token');
 
+    // 👇 AQUÍ AGREGAMOS LA RUTA DE CONFIGURACIÓN AL FINAL DEL ARREGLO
     const menuItems = [
         { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, roles: PERMISOS_FRONT.CATALOGOS_LEER },
         { name: 'Mi Equipo', path: '/dashboard/equipo', icon: UserCog, roles: PERMISOS_FRONT.USUARIOS_GESTION },
@@ -22,6 +23,7 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
         { name: 'Órdenes Trabajo', path: '/dashboard/ordenes-trabajo', icon: Wrench, roles: PERMISOS_FRONT.OT_LEER },
         { name: 'Entidades', path: '/dashboard/entidades', icon: Users, roles: PERMISOS_FRONT.ENTIDADES_LEER },
         { name: 'Catálogos', path: '/dashboard/catalogos', icon: BookOpen, roles: PERMISOS_FRONT.CATALOGOS_LEER },
+        { name: 'Configuración', path: '/dashboard/configuracion', icon: Settings, roles: PERMISOS_FRONT.CATALOGOS_LEER },
     ];
 
     if (user?.empresa?.modulo_naves_activo) {
@@ -39,7 +41,6 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
         if (item.name === 'Dashboard' && isImpersonating) {
             e.preventDefault();
             await stopImpersonating();
-            // 👈 ESCAPE CORRECTO: Hacia el root, no al dashboard
             navigate('/root');
         }
     };
