@@ -2,7 +2,7 @@ import { useAuth } from '../context/AuthContext';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard, FileText, Package, Wrench,
-    Users, BookOpen, LogOut, ChevronLeft, Menu, ArrowLeft, UserCog
+    Users, BookOpen, LogOut, ChevronLeft, Menu, ArrowLeft, UserCog, Ship
 } from 'lucide-react';
 
 import { tienePermiso, PERMISOS_FRONT } from "../config/permissions";
@@ -23,6 +23,15 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
         { name: 'Entidades', path: '/dashboard/entidades', icon: Users, roles: PERMISOS_FRONT.ENTIDADES_LEER },
         { name: 'Catálogos', path: '/dashboard/catalogos', icon: BookOpen, roles: PERMISOS_FRONT.CATALOGOS_LEER },
     ];
+
+    if (user?.empresa?.modulo_naves_activo) {
+        menuItems.splice(5, 0, {
+            name: 'Naves y Equipos',
+            path: '/dashboard/naves',
+            icon: Ship,
+            roles: PERMISOS_FRONT.ENTIDADES_LEER
+        });
+    }
 
     const handleMenuClick = async (e, item) => {
         if (window.innerWidth < 768) setCollapsed(true);

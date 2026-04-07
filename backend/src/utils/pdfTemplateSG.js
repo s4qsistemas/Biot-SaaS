@@ -301,6 +301,7 @@ const generarTemplateCotizacionSG = (cotizacion) => {
             <div class="info-row"><div class="info-label">NOMBRE</div><div class="info-dots">:</div><div class="info-val">${cotizacion.entidad?.nombre || cotizacion.cliente_nombre || '---'}</div></div>
             <div class="info-row"><div class="info-label">RUT</div><div class="info-dots">:</div><div class="info-val">${cotizacion.entidad?.rut || '---'}</div></div>
             <div class="info-row"><div class="info-label">DIRECCION</div><div class="info-dots">:</div><div class="info-val">${cotizacion.entidad?.direccion || '---'}</div></div>
+            <div class="info-row"><div class="info-label">GIRO</div><div class="info-dots">:</div><div class="info-val">${cotizacion.entidad?.giro || '---'}</div></div>
             <div class="info-row"><div class="info-label">CIUDAD</div><div class="info-dots">:</div><div class="info-val">${cotizacion.entidad?.ciudad || '---'}</div></div>
             <div class="info-row"><div class="info-label">TELEFONO</div><div class="info-dots">:</div><div class="info-val">${cotizacion.entidad?.telefono || '---'}</div></div>
             <div class="info-row"><div class="info-label">CONTACTO</div><div class="info-dots">:</div><div class="info-val">${cotizacion.entidad?.contacto_nombre || '---'}</div></div>

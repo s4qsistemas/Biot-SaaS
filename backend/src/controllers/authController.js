@@ -33,7 +33,11 @@ const login = async (req, res) => {
             user: {
                 id: user.id, nombre: user.nombre, email: user.email, rol: user.rol, tenant_id: user.tenant_id,
                 debe_cambiar_password: user.debe_cambiar_password, fecha_vencimiento: user.empresa?.fecha_vencimiento,
-                empresa: { nombre: user.empresa?.nombre, plan: user.empresa?.plan?.nombre || 'Sin Plan' }
+                empresa: {
+                    nombre: user.empresa?.nombre,
+                    plan: user.empresa?.plan?.nombre || 'Sin Plan',
+                    modulo_naves_activo: user.empresa?.modulo_naves_activo
+                }
             }
         });
     } catch (error) {
@@ -51,7 +55,11 @@ const getMe = async (req, res) => {
         res.json({
             id: userFull.id, nombre: userFull.nombre, email: userFull.email, rol: userFull.rol, tenant_id: userFull.tenant_id,
             debe_cambiar_password: userFull.debe_cambiar_password, fecha_vencimiento: userFull.empresa?.fecha_vencimiento,
-            empresa: { nombre: userFull.empresa?.nombre, plan: userFull.empresa?.plan?.nombre || 'Sin Plan' }
+            empresa: {
+                nombre: userFull.empresa?.nombre,
+                plan: userFull.empresa?.plan?.nombre || 'Sin Plan',
+                modulo_naves_activo: userFull.empresa?.modulo_naves_activo
+            }
         });
     } catch (error) {
         res.status(500).json({ message: 'Error al obtener perfil' });

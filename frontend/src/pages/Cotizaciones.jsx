@@ -10,8 +10,9 @@ import { tienePermiso, PERMISOS_FRONT } from '../config/permissions';
 
 const Cotizaciones = () => {
     const { user } = useAuth();
-    // 🛡️ CANDADO DE ESCRITURA
+    // 🛡️ CANDADO DE ESCRITURA Y VARIABLE POLIMÓRFICA
     const puedeEscribir = tienePermiso(user?.rol, PERMISOS_FRONT.COTIZACIONES_ESCRIBIR);
+    const esNaviero = user?.empresa?.modulo_naves_activo; // 👈 La llave maestra
 
     const [cotizaciones, setCotizaciones] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -19,6 +20,9 @@ const Cotizaciones = () => {
     const [clientes, setClientes] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [editingId, setEditingId] = useState(null);
+
+    // Estados para Naves (Exclusivo Naviero)
+    const [navesCliente, setNavesCliente] = useState([]);
 
     // Estados para el Buscador Fantasma
     const [catalogoMaestro, setCatalogoMaestro] = useState([]);
@@ -29,10 +33,15 @@ const Cotizaciones = () => {
     const [busquedaCliente, setBusquedaCliente] = useState('');
     const [clienteDropdownOpen, setClienteDropdownOpen] = useState(false);
 
+    // 👇 formData actualizado con los campos nuevos
     const [formData, setFormData] = useState({
         entidad_id: '',
         validez_dias: 15,
-        observaciones: ''
+        observaciones: '',
+        nave_id: '',
+        solicitud_cotizacion: '',
+        plazo_entrega: '',
+        descripcion_general: ''
     });
 
     const [items, setItems] = useState([
@@ -63,6 +72,26 @@ const Cotizaciones = () => {
         cargarCatalogosMaestros();
     }, []);
 
+    // 👇 EFECTO EN CASCADA: Buscar naves cuando cambia el cliente seleccionado (solo navieros)
+    useEffect(() => {
+        const fetchNavesDelCliente = async () => {
+            if (esNaviero && formData.entidad_id) {
+                try {
+                    const res = await api.get('/api/naves');
+                    // Filtramos en frontend por el cliente seleccionado y que estén activas
+                    const navesAsociadas = res.data.filter(n => n.entidad_id === Number(formData.entidad_id) && n.activo);
+                    setNavesCliente(navesAsociadas);
+                } catch (error) {
+                    console.error("Error al cargar naves del cliente:", error);
+                }
+            } else {
+                setNavesCliente([]);
+                setFormData(prev => ({ ...prev, nave_id: '' })); // Reset si quita el cliente
+            }
+        };
+        fetchNavesDelCliente();
+    }, [formData.entidad_id, esNaviero]);
+
     const cargarCotizaciones = async () => {
         try {
             setLoading(true);
@@ -78,7 +107,6 @@ const Cotizaciones = () => {
     const cargarClientes = async () => {
         try {
             const response = await api.get('/api/entidades');
-            // 🛡️ FILTRO: Solo clientes activos para nuevas cotizaciones
             setClientes(response.data.filter(c => c.activo));
         } catch (error) {
             console.error("Error al cargar clientes:", error);
@@ -134,10 +162,15 @@ const Cotizaciones = () => {
     const handleEditar = async (id) => {
         try {
             const dataCompleta = await getCotizacionById(id);
+            // 👇 Llenamos todos los campos mutantes
             setFormData({
                 entidad_id: dataCompleta.entidad_id,
                 validez_dias: dataCompleta.validez_dias || 15,
-                observaciones: dataCompleta.observaciones || ''
+                observaciones: dataCompleta.observaciones || '',
+                nave_id: dataCompleta.nave_id || '',
+                solicitud_cotizacion: dataCompleta.solicitud_cotizacion || '',
+                plazo_entrega: dataCompleta.plazo_entrega || '',
+                descripcion_general: dataCompleta.descripcion_general || ''
             });
             const clienteEdit = clientes.find(c => c.id === dataCompleta.entidad_id);
             setBusquedaCliente(clienteEdit ? `${clienteEdit.rut} - ${clienteEdit.nombre}` : dataCompleta.cliente_nombre || '');
@@ -160,7 +193,11 @@ const Cotizaciones = () => {
 
     const abrirModalNuevo = () => {
         setEditingId(null);
-        setFormData({ entidad_id: '', validez_dias: 15, observaciones: '' });
+        // 👇 Reseteo de campos extendidos
+        setFormData({
+            entidad_id: '', validez_dias: 15, observaciones: '',
+            nave_id: '', solicitud_cotizacion: '', plazo_entrega: '', descripcion_general: ''
+        });
         setBusquedaCliente('');
         setItems([{ descripcion: '', cantidad: 1, unitario: 0, tipo_item: 'servicio', producto_id: null, operario_id: null, equipo_id: null }]);
         setIsModalOpen(true);
@@ -231,7 +268,6 @@ const Cotizaciones = () => {
     };
 
     const abrirModalEnvio = () => {
-        // 🔧 CORRECCIÓN: entidad en singular
         setEmailDestino(selectedCotizacion.entidad?.email || '');
         setIsEmailModalOpen(true);
     };
@@ -286,13 +322,20 @@ const Cotizaciones = () => {
         setIsSubmitting(true);
         try {
             const clienteSeleccionado = clientes.find(c => c.id === Number(formData.entidad_id));
+
+            // 👇 Payload con los campos nuevos integrados
             const payload = {
                 entidad_id: formData.entidad_id,
                 cliente_nombre: clienteSeleccionado?.nombre || 'Cliente Desconocido',
                 validez_dias: formData.validez_dias,
                 observaciones: formData.observaciones,
-                items: items
+                items: items,
+                nave_id: formData.nave_id ? Number(formData.nave_id) : null,
+                solicitud_cotizacion: formData.solicitud_cotizacion,
+                plazo_entrega: formData.plazo_entrega,
+                descripcion_general: formData.descripcion_general
             };
+
             if (editingId) await updateCotizacionCompleta(editingId, payload);
             else await createCotizacion(payload);
 
@@ -329,7 +372,6 @@ const Cotizaciones = () => {
                     </h2>
                     <p className="text-txt-secondary">Gestión de presupuestos comerciales</p>
                 </div>
-                {/* 🛡️ CANDADO VISUAL: Solo autorizados pueden crear */}
                 {puedeEscribir && (
                     <button
                         onClick={abrirModalNuevo}
@@ -377,7 +419,6 @@ const Cotizaciones = () => {
                                         </td>
                                         <td className="p-4 text-right font-bold text-white">${Number(cot.monto_total).toLocaleString('es-CL')}</td>
                                         <td className="p-4 text-center flex justify-center gap-2">
-                                            {/* 🛡️ CANDADO VISUAL: Edición */}
                                             {puedeEscribir && cot.estado === 'borrador' && (
                                                 <button onClick={() => handleEditar(cot.id)} className="text-yellow-500 hover:text-yellow-400 p-2 hover:bg-yellow-500/10 rounded-lg transition-colors" title="Editar Cotización">
                                                     <Pencil size={18} />
@@ -387,7 +428,6 @@ const Cotizaciones = () => {
                                                 <Eye size={18} />
                                             </button>
 
-                                            {/* 🛡️ ELIMINAR: Solo borradores */}
                                             {puedeEscribir && cot.estado === 'borrador' && (
                                                 <button onClick={() => handleEliminar(cot.id)} className="text-red-400 hover:text-red-300 p-2 hover:bg-red-500/10 rounded-lg transition-colors" title="Eliminar Borrador">
                                                     <Trash2 size={18} />
@@ -412,7 +452,6 @@ const Cotizaciones = () => {
                         </div>
 
                         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
-                            {/* ... [CONTENIDO DEL FORMULARIO INTACTO] ... */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-dark-bg p-4 rounded-lg border border-dark-border">
                                 <div className="relative">
                                     <label className="block text-xs font-medium text-txt-secondary mb-1">Cliente</label>
@@ -435,6 +474,50 @@ const Cotizaciones = () => {
                                     <input type="number" min="1" className="w-full bg-dark-surface border border-dark-border rounded-lg p-2 text-sm text-txt-primary focus:border-brand outline-none" value={formData.validez_dias} onChange={(e) => setFormData({ ...formData, validez_dias: e.target.value })} />
                                 </div>
                             </div>
+
+                            {/* 👇 BLOQUE EXCLUSIVO NAVIERO A CONTINUACIÓN DE CLIENTES */}
+                            {esNaviero && (
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-brand/5 p-4 rounded-lg border border-brand/20 mt-4">
+                                    <div>
+                                        <label className="block text-xs font-medium text-txt-secondary mb-1">Nave / Equipo (Opcional)</label>
+                                        <select
+                                            className="w-full bg-dark-surface border border-dark-border rounded-lg p-2 text-sm text-txt-primary focus:border-brand outline-none"
+                                            value={formData.nave_id}
+                                            onChange={(e) => setFormData({ ...formData, nave_id: e.target.value })}
+                                            disabled={!formData.entidad_id || navesCliente.length === 0}
+                                        >
+                                            <option value="">-- Trabajo en tierra / Sin nave --</option>
+                                            {navesCliente.map(nave => (
+                                                <option key={nave.id} value={nave.id}>{nave.nombre}</option>
+                                            ))}
+                                        </select>
+                                        {formData.entidad_id && navesCliente.length === 0 && (
+                                            <p className="text-[10px] text-yellow-500 mt-1">Este cliente no tiene naves.</p>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-txt-secondary mb-1">Nº Solicitud</label>
+                                        <input
+                                            type="text"
+                                            placeholder="Ej: 3024260093R02"
+                                            className="w-full bg-dark-surface border border-dark-border rounded-lg p-2 text-sm text-txt-primary focus:border-brand outline-none"
+                                            value={formData.solicitud_cotizacion}
+                                            onChange={(e) => setFormData({ ...formData, solicitud_cotizacion: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-txt-secondary mb-1">Plazo de Entrega</label>
+                                        <input
+                                            type="text"
+                                            placeholder="Ej: 15 días hábiles"
+                                            className="w-full bg-dark-surface border border-dark-border rounded-lg p-2 text-sm text-txt-primary focus:border-brand outline-none"
+                                            value={formData.plazo_entrega}
+                                            onChange={(e) => setFormData({ ...formData, plazo_entrega: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                            {/* 👆 FIN BLOQUE NAVIERO */}
 
                             <div>
                                 <div className="flex justify-between items-center mb-2">
@@ -477,8 +560,18 @@ const Cotizaciones = () => {
                             </div>
                             <div className="flex flex-col md:flex-row gap-6 pt-4 border-t border-dark-border">
                                 <div className="flex-1">
-                                    <label className="block text-xs font-medium text-txt-secondary mb-1">Observaciones</label>
-                                    <textarea className="w-full bg-dark-surface border border-dark-border rounded-lg p-2 text-sm text-txt-primary focus:border-brand outline-none h-24 custom-scrollbar" placeholder="Términos y condiciones..." value={formData.observaciones} onChange={(e) => setFormData({ ...formData, observaciones: e.target.value })}></textarea>
+                                    {/* 👇 TEXTAREA CONDICIONAL 👇 */}
+                                    {!esNaviero ? (
+                                        <>
+                                            <label className="block text-xs font-medium text-txt-secondary mb-1">Observaciones</label>
+                                            <textarea className="w-full bg-dark-surface border border-dark-border rounded-lg p-2 text-sm text-txt-primary focus:border-brand outline-none h-24 custom-scrollbar" placeholder="Términos y condiciones..." value={formData.observaciones} onChange={(e) => setFormData({ ...formData, observaciones: e.target.value })}></textarea>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <label className="block text-xs font-medium text-txt-secondary mb-1">Descripción General</label>
+                                            <textarea className="w-full bg-dark-surface border border-dark-border rounded-lg p-2 text-sm text-txt-primary focus:border-brand outline-none h-24 custom-scrollbar" placeholder="Resumen del trabajo a realizar..." value={formData.descripcion_general} onChange={(e) => setFormData({ ...formData, descripcion_general: e.target.value })}></textarea>
+                                        </>
+                                    )}
                                 </div>
                                 <div className="w-full md:w-64 bg-dark-bg p-4 rounded-xl border border-dark-border space-y-2">
                                     <div className="flex justify-between text-sm text-txt-secondary"><span>Neto:</span><span>${totales.neto.toLocaleString('es-CL')}</span></div>
@@ -569,7 +662,6 @@ const Cotizaciones = () => {
                                     {isGeneratingPdf ? '⏳ Generando...' : '👁️ Ver PDF'}
                                 </button>
 
-                                {/* 🛡️ CANDADO VISUAL: Flujo de Aprobación/Rechazo/Envío */}
                                 {puedeEscribir && ['borrador', 'enviada'].includes(selectedCotizacion.estado) && (
                                     <button onClick={abrirModalEnvio} className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium">
                                         <Send size={16} /> {selectedCotizacion.estado === 'borrador' ? 'Enviar a Cliente' : 'Reenviar PDF'}

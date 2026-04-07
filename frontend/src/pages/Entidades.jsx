@@ -112,6 +112,7 @@ const Entidades = () => {
                                 <th className="p-4 font-medium">Estado</th>
                                 <th className="p-4 font-medium">Nombre / Razón Social</th>
                                 <th className="p-4 font-medium">RUT</th>
+                                <th className="p-4 font-medium">Giro</th>
                                 <th className="p-4 font-medium">Tipo</th>
                                 <th className="p-4 font-medium">Contacto</th>
                                 {tienePermisosCompletos && (
@@ -135,6 +136,10 @@ const Entidades = () => {
 
                                     <td className="p-4 text-txt-secondary font-mono text-sm">
                                         {formatRut(entidad.rut)}
+                                    </td>
+
+                                    <td className="p-4 text-txt-secondary text-sm">
+                                        {entidad.giro || '-'}
                                     </td>
 
                                     <td className="p-4">

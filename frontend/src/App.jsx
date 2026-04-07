@@ -22,6 +22,7 @@ import Inventario from './pages/Inventario';
 import Cotizaciones from './pages/Cotizaciones';
 import OrdenesTrabajo from './pages/OrdenesTrabajo';
 import Equipo from './pages/Equipo';
+import Naves from './pages/Naves';
 
 // 🛡️ GUARDIA DE SEGURIDAD PARA RUTAS PRIVADAS (Jaula y Paywall)
 const PrivateRoute = () => {
@@ -130,6 +131,11 @@ function App() {
 
               <Route element={<RoleGuard permiso={PERMISOS_FRONT.ENTIDADES_LEER} />}>
                 <Route path="/dashboard/entidades" element={<Entidades />} />
+              </Route>
+
+              {/* 🚢 MÓDULO NAVIERO */}
+              <Route element={<RoleGuard permiso={PERMISOS_FRONT.ENTIDADES_LEER} />}>
+                <Route path="/dashboard/naves" element={<Naves />} />
               </Route>
 
               <Route element={<RoleGuard permiso={PERMISOS_FRONT.INVENTARIO_LEER} />}>

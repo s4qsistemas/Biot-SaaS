@@ -71,6 +71,8 @@ const generarTemplateCotizacion = (cotizacion) => {
                     <div class="info-value">${cotizacion.entidad?.nombre || cotizacion.cliente_nombre}</div>
                     <div class="info-label">RUT</div>
                     <div class="info-value">${cotizacion.entidad?.rut || '---'}</div>
+                    <div class="info-label">Giro</div>
+                    <div class="info-value">${cotizacion.entidad?.giro || '---'}</div>
                     <div class="info-label">Email</div>
                     <div class="info-value">${cotizacion.entidad?.email || '---'}</div>
                 </div>

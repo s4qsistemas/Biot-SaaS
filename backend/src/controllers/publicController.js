@@ -7,9 +7,9 @@ const prisma = new PrismaClient();
 
 const registrarEmpresa = async (req, res) => {
     try {
-        const { nombre_empresa, rut_empresa, alias, nombre_admin, email_admin, password_admin } = req.body;
+        const { nombre_empresa, rut_empresa, alias, direccion, nombre_admin, email_admin, password_admin } = req.body;
 
-        if (!nombre_empresa || !rut_empresa || !alias || !nombre_admin || !email_admin || !password_admin) {
+        if (!nombre_empresa || !rut_empresa || !alias || !direccion || !nombre_admin || !email_admin || !password_admin) {
             return res.status(400).json({ message: 'Todos los campos son obligatorios.' });
         }
 
@@ -38,6 +38,7 @@ const registrarEmpresa = async (req, res) => {
                     nombre: nombre_empresa,
                     rut: rutFormateado,
                     alias: alias,
+                    direccion: direccion || null,
                     activo: true,
                     plan_id: 4,
                     fecha_vencimiento: fechaVencimiento

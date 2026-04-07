@@ -8,6 +8,7 @@ const EntidadModal = ({ isOpen, onClose, onSave, entidadToEdit }) => {
         rut: '',
         nombre: '',
         tipo: 'cliente',
+        giro: '',
         email: '',
         telefono: '',
         direccion: '',
@@ -29,6 +30,7 @@ const EntidadModal = ({ isOpen, onClose, onSave, entidadToEdit }) => {
                     rut: formatRut(entidadToEdit.rut),
                     nombre: entidadToEdit.nombre || '',
                     tipo: entidadToEdit.tipo || 'cliente',
+                    giro: entidadToEdit.giro || '',
                     email: entidadToEdit.email || '',
                     telefono: entidadToEdit.telefono || '',
                     direccion: entidadToEdit.direccion || '',
@@ -145,6 +147,21 @@ const EntidadModal = ({ isOpen, onClose, onSave, entidadToEdit }) => {
                                 onChange={handleChange}
                                 placeholder="Nombre de la empresa"
                                 required
+                                className="w-full bg-dark-bg border border-dark-border rounded-lg px-4 py-2 text-txt-primary focus:border-brand outline-none transition-colors"
+                            />
+                        </div>
+
+                        {/* Giro Comercial */}
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-txt-secondary uppercase flex items-center gap-2">
+                                <Building2 size={14} /> Giro
+                            </label>
+                            <input
+                                type="text"
+                                name="giro"
+                                value={formData.giro}
+                                onChange={handleChange}
+                                placeholder="Ej: Servicios Industriales"
                                 className="w-full bg-dark-bg border border-dark-border rounded-lg px-4 py-2 text-txt-primary focus:border-brand outline-none transition-colors"
                             />
                         </div>
