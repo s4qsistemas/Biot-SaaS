@@ -57,11 +57,20 @@ const ModalNave = ({ isOpen, onClose, naveData, onSaveSuccess }) => {
         setError('');
 
         try {
-            // Limpiamos el entidad_id si quedó vacío para enviar null al backend
             const payload = {
                 ...formData,
-                entidad_id: formData.entidad_id === '' ? null : formData.entidad_id
+                entidad_id: formData.entidad_id === '' ? null : Number(formData.entidad_id)
             };
+
+            // 👇 LA BARRERA DE FRICCIÓN
+            // Si estamos editando, tenía dueño previo, y el dueño nuevo es distinto al original
+            if (naveData?.id && naveData.entidad_id && payload.entidad_id !== naveData.entidad_id) {
+                const confirmar = window.confirm("⚠️ Estás a punto de transferir este activo a otro cliente distinto. ¿Estás absolutamente seguro de este cambio?");
+                if (!confirmar) {
+                    setLoading(false);
+                    return; // Detiene la ejecución
+                }
+            }
 
             if (naveData?.id) {
                 await api.put(`/api/naves/${naveData.id}`, payload);
