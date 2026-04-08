@@ -10,6 +10,7 @@ import ModalCambiarPlan from '../components/superadmin/ModalCambiarPlan';
 import ModalCambiarEstado from '../components/superadmin/ModalCambiarEstado';
 import ModalAuditoria from '../components/superadmin/ModalAuditoria';
 import { Plus, Edit, Power, TrendingUp, History, ShieldCheck, Building } from 'lucide-react';
+import { formatRut } from '../utils/rut';
 
 export default function SuperAdminDashboard() {
     // 👈 Extraemos impersonate del AuthContext
@@ -143,7 +144,7 @@ export default function SuperAdminDashboard() {
                                     >
                                         <td className="p-4">
                                             <p className="font-bold text-white group-hover:text-brand transition-colors">{empresa.nombre}</p>
-                                            <p className="text-xs text-txt-secondary font-mono mt-0.5">{empresa.rut}</p>
+                                            <p className="text-xs text-txt-secondary font-mono mt-0.5">{formatRut(empresa.rut)}</p>
                                         </td>
                                         <td className="p-4">
                                             {empresa.admin_nombre ? (

@@ -48,13 +48,19 @@ const EntidadModal = ({ isOpen, onClose, onSave, entidadToEdit }) => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-
-        // Si el usuario edita el RUT, borramos el error momentáneamente
-        if (name === 'rut') setRutError('');
+        
+        if (name === 'rut') {
+            setRutError('');
+            // Formateo en tiempo real (opcional, pero se pide "que se use en todos los casos")
+            // Si queremos que el usuario vea los puntos mientras escribe:
+            const formatted = formatRut(value);
+            setFormData(prev => ({ ...prev, [name]: formatted }));
+        } else {
+            setFormData(prev => ({ ...prev, [name]: value }));
+        }
     };
 
-    // Validación y Formateo Automático al salir del campo (UX)
+    // Validación al salir del campo (UX)
     const handleRutBlur = () => {
         if (!formData.rut) return;
 
@@ -62,8 +68,6 @@ const EntidadModal = ({ isOpen, onClose, onSave, entidadToEdit }) => {
             setRutError('RUT inválido');
         } else {
             setRutError('');
-            // Si es válido, lo formateamos bonito automáticamente (111111111 -> 11.111.111-1)
-            setFormData(prev => ({ ...prev, rut: formatRut(prev.rut) }));
         }
     };
 

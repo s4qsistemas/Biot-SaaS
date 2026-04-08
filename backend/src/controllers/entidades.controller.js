@@ -1,4 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
+const { validateRut, formatRutForDB } = require('../utils/rut');
 const prisma = new PrismaClient();
 
 const getEntidades = async (req, res) => {
@@ -36,8 +37,17 @@ const createEntidad = async (req, res) => {
         // Whitelisting explícito
         const { nombre, rut, tipo, giro, direccion, comuna, ciudad, email, telefono, contacto_nombre } = req.body;
 
+        // 🛡️ VALIDACIÓN Y FORMATEO DE RUT
+        let rutFinal = rut;
+        if (rut) {
+            if (!validateRut(rut)) {
+                return res.status(400).json({ message: "El RUT proporcionado es inválido." });
+            }
+            rutFinal = formatRutForDB(rut);
+        }
+
         const nuevaEntidad = await prisma.entidad.create({
-            data: { tenant_id, nombre, rut, tipo, giro, direccion, comuna, ciudad, email, telefono, contacto_nombre }
+            data: { tenant_id, nombre, rut: rutFinal, tipo, giro, direccion, comuna, ciudad, email, telefono, contacto_nombre }
         });
         res.status(201).json(nuevaEntidad);
     } catch (error) {
@@ -58,6 +68,19 @@ const updateEntidad = async (req, res) => {
 
         if (!existe) return res.status(404).json({ message: "Entidad no encontrada" });
 
+        // 🛡️ VALIDACIÓN Y FORMATEO DE RUT (si viene en el body)
+        let rutFinal = rut;
+        if (rut !== undefined) {
+            if (rut) {
+                if (!validateRut(rut)) {
+                    return res.status(400).json({ message: "El RUT proporcionado es inválido." });
+                }
+                rutFinal = formatRutForDB(rut);
+            } else {
+                rutFinal = null;
+            }
+        }
+
         // 🛡️ RESTRICCIÓN: No desactivar si tiene cotizaciones en BORRADOR
         if (activo === false && existe.activo === true) {
             const tieneBorradores = await prisma.cotizacion.findFirst({
@@ -72,7 +95,7 @@ const updateEntidad = async (req, res) => {
 
         const entidadActualizada = await prisma.entidad.update({
             where: { id: parseInt(id) },
-            data: { nombre, rut, tipo, giro, direccion, comuna, ciudad, email, telefono, contacto_nombre, activo }
+            data: { nombre, rut: rutFinal, tipo, giro, direccion, comuna, ciudad, email, telefono, contacto_nombre, activo }
         });
         res.json(entidadActualizada);
     } catch (error) {

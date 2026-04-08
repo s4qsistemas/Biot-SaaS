@@ -7,6 +7,7 @@ import api from '../utils/api';
 // 🛡️ IMPORTACIONES DE SEGURIDAD FRONTEND
 import { useAuth } from '../context/AuthContext';
 import { tienePermiso, PERMISOS_FRONT } from '../config/permissions';
+import { formatRut } from '../utils/rut';
 
 const Cotizaciones = () => {
     const { user } = useAuth();
@@ -173,7 +174,7 @@ const Cotizaciones = () => {
                 descripcion_general: dataCompleta.descripcion_general || ''
             });
             const clienteEdit = clientes.find(c => c.id === dataCompleta.entidad_id);
-            setBusquedaCliente(clienteEdit ? `${clienteEdit.rut} - ${clienteEdit.nombre}` : dataCompleta.cliente_nombre || '');
+            setBusquedaCliente(clienteEdit ? `${formatRut(clienteEdit.rut)} - ${clienteEdit.nombre}` : dataCompleta.cliente_nombre || '');
             setItems(dataCompleta.detalle_cotizaciones.map(i => ({
                 descripcion: i.descripcion,
                 cantidad: i.cantidad,
@@ -462,8 +463,8 @@ const Cotizaciones = () => {
                                     {clienteDropdownOpen && busquedaCliente.length >= 2 && clientesFiltrados.length > 0 && (
                                         <ul className="absolute z-[70] w-full mt-1 bg-[#1e2330] border border-brand/50 rounded-lg shadow-2xl overflow-hidden max-h-48 overflow-y-auto">
                                             {clientesFiltrados.map(c => (
-                                                <li key={c.id} className="p-3 hover:bg-brand/20 cursor-pointer border-b border-dark-border last:border-0 transition-colors" onMouseDown={(e) => e.preventDefault()} onClick={() => { setFormData({ ...formData, entidad_id: c.id }); setBusquedaCliente(`${c.rut} - ${c.nombre}`); setClienteDropdownOpen(false); }}>
-                                                    <span className="text-sm text-white font-medium">{c.nombre}</span><span className="text-xs text-brand block mt-0.5">{c.rut}</span>
+                                                <li key={c.id} className="p-3 hover:bg-brand/20 cursor-pointer border-b border-dark-border last:border-0 transition-colors" onMouseDown={(e) => e.preventDefault()} onClick={() => { setFormData({ ...formData, entidad_id: c.id }); setBusquedaCliente(`${formatRut(c.rut)} - ${c.nombre}`); setClienteDropdownOpen(false); }}>
+                                                    <span className="text-sm text-white font-medium">{c.nombre}</span><span className="text-xs text-brand block mt-0.5">{formatRut(c.rut)}</span>
                                                 </li>
                                             ))}
                                         </ul>
