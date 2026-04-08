@@ -562,15 +562,7 @@ const Cotizaciones = () => {
                                             <div className="w-32"><input type="number" min="0" placeholder="Precio Unit." className="w-full bg-dark-surface border border-dark-border rounded p-2 text-sm text-txt-primary focus:border-brand outline-none text-right" value={item.unitario} onChange={(e) => handleItemChange(index, 'unitario', e.target.value)} /></div>
                                             <div className="w-32 pt-2 text-right font-mono text-sm font-semibold text-white">${(Number(item.cantidad) * Number(item.unitario)).toLocaleString('es-CL')}</div>
                                             
-                                            <div className="flex flex-col gap-1">
-                                                <button 
-                                                    type="button" 
-                                                    onClick={() => insertarFila(index)} 
-                                                    className="p-1.5 text-brand hover:bg-brand/10 rounded-md transition-all opacity-0 group-hover/row:opacity-100 hover:scale-110" 
-                                                    title="Insertar línea debajo"
-                                                >
-                                                    <Plus size={18} />
-                                                </button>
+                                            <div className="flex items-center">
                                                 <button 
                                                     type="button" 
                                                     onClick={() => eliminarFila(index)} 
