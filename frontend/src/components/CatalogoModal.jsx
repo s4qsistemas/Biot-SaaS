@@ -155,7 +155,7 @@ const CatalogoModal = ({ isOpen, onClose, onSave, activeTab, itemToEdit }) => {
 
     return (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 animate-fadeIn">
-            <div className="bg-dark-surface rounded-xl flex flex-col w-full max-w-2xl border border-dark-border shadow-2xl">
+            <div className="bg-dark-surface rounded-xl flex flex-col w-full max-w-2xl max-h-[90vh] border border-dark-border shadow-2xl">
 
                 <div className="p-6 border-b border-dark-border flex justify-between items-center">
                     <h3 className="text-xl font-bold text-white flex items-center gap-2">
@@ -165,7 +165,7 @@ const CatalogoModal = ({ isOpen, onClose, onSave, activeTab, itemToEdit }) => {
                     <button onClick={onClose} className="text-txt-secondary hover:text-white transition-colors">✕</button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                <form onSubmit={handleSubmit} className="p-6 space-y-6 flex-1 overflow-y-auto custom-scrollbar">
 
                     {/* PANEL DE NOMENCLATURA 3x3 AUTOMÁTICO */}
                     <div className="bg-dark-bg p-4 rounded-lg border border-dark-border grid grid-cols-1 md:grid-cols-2 gap-4 items-center">

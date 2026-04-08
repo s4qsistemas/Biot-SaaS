@@ -89,7 +89,7 @@ const ModalNave = ({ isOpen, onClose, naveData, onSaveSuccess }) => {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
-            <div className="bg-dark-surface border border-dark-border rounded-xl w-full max-w-md shadow-2xl overflow-hidden animate-slideUp">
+            <div className="bg-dark-surface border border-dark-border rounded-xl w-full max-w-md max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-slideUp">
 
                 <div className="flex justify-between items-center p-4 border-b border-dark-border bg-dark-bg/50">
                     <h2 className="text-lg font-bold text-white">
@@ -100,7 +100,7 @@ const ModalNave = ({ isOpen, onClose, naveData, onSaveSuccess }) => {
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                <form onSubmit={handleSubmit} className="p-6 space-y-4 flex-1 overflow-y-auto custom-scrollbar">
                     {error && (
                         <div className="bg-red-500/10 border border-red-500/50 p-3 rounded-lg flex items-start gap-2 text-red-400 text-sm">
                             <AlertCircle size={16} className="mt-0.5 shrink-0" />

@@ -43,13 +43,13 @@ export default function ModalEditarEmpleado({ isOpen, onClose, empleadoData, onU
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-            <div className="bg-dark-surface border border-dark-border rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-fadeIn">
+            <div className="bg-dark-surface border border-dark-border rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden animate-fadeIn">
                 <div className="px-6 py-4 border-b border-dark-border flex justify-between items-center bg-dark-bg/50">
                     <h3 className="text-lg font-bold text-white">Editar Empleado</h3>
                     <button onClick={onClose} className="text-txt-secondary hover:text-white transition-colors">✕</button>
                 </div>
 
-                <form onSubmit={handleGuardar} className="p-6 space-y-5">
+                <form onSubmit={handleGuardar} className="p-6 space-y-5 flex-1 overflow-y-auto custom-scrollbar">
                     
                     <div className="bg-dark-bg p-3 border border-dark-border rounded-lg mb-4 flex justify-between items-center">
                         <div>

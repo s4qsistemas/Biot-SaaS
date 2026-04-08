@@ -41,13 +41,13 @@ export default function ModalCrearEmpleado({ isOpen, onClose }) {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-            <div className="bg-dark-surface border border-dark-border rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-fadeIn">
+            <div className="bg-dark-surface border border-dark-border rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden animate-fadeIn">
                 <div className="px-6 py-4 border-b border-dark-border flex justify-between items-center bg-dark-bg/50">
                     <h3 className="text-lg font-bold text-txt-primary">Registrar Nuevo Empleado</h3>
                     <button onClick={onClose} className="text-txt-secondary hover:text-white">✕</button>
                 </div>
 
-                <form onSubmit={handleFormSubmit} className="p-6 space-y-4">
+                <form onSubmit={handleFormSubmit} className="p-6 space-y-4 flex-1 overflow-y-auto custom-scrollbar">
                     {mensaje.texto && mensaje.tipo === 'error' && (
                         <div className="p-3 rounded-lg text-sm border font-medium bg-red-900/10 border-red-500/30 text-red-400">
                             {mensaje.texto}

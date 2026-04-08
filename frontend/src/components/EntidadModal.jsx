@@ -93,7 +93,7 @@ const EntidadModal = ({ isOpen, onClose, onSave, entidadToEdit }) => {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn">
-            <div className="bg-dark-surface border border-dark-border w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden">
+            <div className="bg-dark-surface border border-dark-border w-full max-w-2xl max-h-[90vh] flex flex-col rounded-xl shadow-2xl overflow-hidden">
 
                 {/* Header */}
                 <div className="flex justify-between items-center p-6 border-b border-dark-border bg-dark-bg/50">
@@ -111,7 +111,7 @@ const EntidadModal = ({ isOpen, onClose, onSave, entidadToEdit }) => {
                 </div>
 
                 {/* Body */}
-                <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                <form onSubmit={handleSubmit} className="p-6 space-y-6 flex-1 overflow-y-auto custom-scrollbar">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                         {/* Campo RUT con Validación */}
