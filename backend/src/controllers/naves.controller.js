@@ -4,7 +4,7 @@ const prisma = new PrismaClient();
 // CREAR
 const crearNave = async (req, res) => {
     try {
-        const { nombre, descripcion } = req.body;
+        const { nombre, descripcion, entidad_id } = req.body;
         // 👇 CORRECCIÓN: req.user en lugar de req.usuario
         const tenant_id = req.user.tenant_id;
 
@@ -12,7 +12,8 @@ const crearNave = async (req, res) => {
             data: {
                 tenant_id,
                 nombre,
-                descripcion
+                descripcion,
+                entidad_id: entidad_id ? Number(entidad_id) : null
             }
         });
 
