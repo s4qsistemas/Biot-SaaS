@@ -294,6 +294,13 @@ const Cotizaciones = () => {
     };
 
     const agregarFila = () => setItems([...items, { descripcion: '', cantidad: 1, unitario: 0, tipo_item: 'servicio', producto_id: null, operario_id: null, equipo_id: null }]);
+    
+    const insertarFila = (index) => {
+        const nuevosItems = [...items];
+        nuevosItems.splice(index + 1, 0, { descripcion: '', cantidad: 1, unitario: 0, tipo_item: 'servicio', producto_id: null, operario_id: null, equipo_id: null });
+        setItems(nuevosItems);
+    };
+
     const eliminarFila = (index) => {
         if (items.length === 1) return;
         setItems(items.filter((_, i) => i !== index));
@@ -521,18 +528,18 @@ const Cotizaciones = () => {
                             {/* 👆 FIN BLOQUE NAVIERO */}
 
                             <div>
-                                <div className="flex justify-between items-center mb-2">
+                                <div className="sticky top-0 z-20 bg-dark-surface py-2 mb-2 flex justify-between items-center border-b border-dark-border/50 backdrop-blur-md">
                                     <h4 className="font-semibold text-white">Ítems a Cotizar</h4>
-                                    <button type="button" onClick={agregarFila} className="text-xs bg-brand/20 text-brand px-3 py-1 rounded flex items-center gap-1 hover:bg-brand/30 transition-colors">
+                                    <button type="button" onClick={agregarFila} className="text-xs bg-brand/20 text-brand px-3 py-1 rounded flex items-center gap-1 hover:bg-brand/30 transition-all active:scale-95 shadow-lg shadow-brand/10">
                                         <Plus size={14} /> Agregar Línea
                                     </button>
                                 </div>
                                 <div className="flex gap-2 items-center px-3 mb-1 mt-4 text-[10px] font-bold text-txt-secondary uppercase tracking-wider">
-                                    <div className="flex-1">Descripción del Servicio/Producto</div><div className="w-24 text-center">Cantidad</div><div className="w-32 text-right">Precio Unit.</div><div className="w-32 text-right pr-8">Subtotal</div>
+                                    <div className="flex-1">Descripción del Servicio/Producto</div><div className="w-24 text-center">Cantidad</div><div className="w-32 text-right">Precio Unit.</div><div className="w-32 text-right pr-20">Subtotal</div>
                                 </div>
                                 <div className="space-y-2">
                                     {items.map((item, index) => (
-                                        <div key={index} className="flex gap-2 items-start bg-dark-bg p-3 rounded-lg border border-dark-border">
+                                        <div key={index} className="flex gap-2 items-start bg-dark-bg p-3 rounded-lg border border-dark-border group/row hover:border-brand/30 transition-colors">
                                             <div className="flex-1 relative">
                                                 <div className="relative">
                                                     <input type="text" placeholder="Descripción libre o busca en el catálogo..." className="w-full bg-dark-surface border border-dark-border rounded p-2 text-sm text-txt-primary focus:border-brand outline-none pl-8" value={item.descripcion} onChange={(e) => handleDescripcionChange(index, e.target.value)} onFocus={() => { if (item.descripcion.length >= 2) setBusquedaActiva(index) }} onBlur={() => setTimeout(() => setBusquedaActiva(null), 200)} />
@@ -554,9 +561,37 @@ const Cotizaciones = () => {
                                             <div className="w-24"><input type="number" min="0.1" step="0.1" placeholder="Cant." className="w-full bg-dark-surface border border-dark-border rounded p-2 text-sm text-txt-primary focus:border-brand outline-none text-center" value={item.cantidad} onChange={(e) => handleItemChange(index, 'cantidad', e.target.value)} /></div>
                                             <div className="w-32"><input type="number" min="0" placeholder="Precio Unit." className="w-full bg-dark-surface border border-dark-border rounded p-2 text-sm text-txt-primary focus:border-brand outline-none text-right" value={item.unitario} onChange={(e) => handleItemChange(index, 'unitario', e.target.value)} /></div>
                                             <div className="w-32 pt-2 text-right font-mono text-sm font-semibold text-white">${(Number(item.cantidad) * Number(item.unitario)).toLocaleString('es-CL')}</div>
-                                            <button type="button" onClick={() => eliminarFila(index)} className={`p-2 rounded mt-0.5 transition-colors ${items.length === 1 ? 'text-dark-border cursor-not-allowed' : 'text-red-400 hover:bg-red-500/20'}`} disabled={items.length === 1}><Trash2 size={18} /></button>
+                                            
+                                            <div className="flex flex-col gap-1">
+                                                <button 
+                                                    type="button" 
+                                                    onClick={() => insertarFila(index)} 
+                                                    className="p-1.5 text-brand hover:bg-brand/10 rounded-md transition-all opacity-0 group-hover/row:opacity-100 hover:scale-110" 
+                                                    title="Insertar línea debajo"
+                                                >
+                                                    <Plus size={18} />
+                                                </button>
+                                                <button 
+                                                    type="button" 
+                                                    onClick={() => eliminarFila(index)} 
+                                                    className={`p-1.5 rounded-md transition-all ${items.length === 1 ? 'text-dark-border cursor-not-allowed' : 'text-red-400 hover:bg-red-500/10 hover:scale-110'}`} 
+                                                    disabled={items.length === 1}
+                                                    title="Eliminar línea"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            </div>
                                         </div>
                                     ))}
+
+                                    <button
+                                        type="button"
+                                        onClick={agregarFila}
+                                        className="w-full py-4 mt-4 border-2 border-dashed border-dark-border rounded-xl text-txt-secondary hover:text-brand hover:border-brand/40 hover:bg-brand/5 transition-all flex items-center justify-center gap-3 group/add"
+                                    >
+                                        <PlusCircle size={22} className="group-hover/add:scale-110 transition-transform text-dark-border group-hover/add:text-brand" />
+                                        <span className="font-semibold text-sm">Agregar Nueva Línea de Servicio o Producto</span>
+                                    </button>
                                 </div>
                             </div>
                             <div className="flex flex-col md:flex-row gap-6 pt-4 border-t border-dark-border">
@@ -594,7 +629,7 @@ const Cotizaciones = () => {
             {/* MODAL DETALLE */}
             {isDetailModalOpen && selectedCotizacion && (
                 <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60] p-4 animate-fadeIn">
-                    <div className="bg-dark-surface rounded-xl flex flex-col w-full max-w-3xl border border-dark-border shadow-2xl">
+                    <div className="bg-dark-surface rounded-xl flex flex-col w-full max-w-3xl max-h-[90vh] border border-dark-border shadow-2xl">
                         <div className="p-6 border-b border-dark-border flex justify-between items-start bg-dark-bg/50">
                             <div>
                                 <h3 className="text-xl font-bold text-white flex items-center gap-2">
@@ -616,7 +651,7 @@ const Cotizaciones = () => {
                             <button onClick={() => setIsDetailModalOpen(false)} className="text-txt-secondary hover:text-white transition-colors">✕</button>
                         </div>
 
-                        <div className="p-6 space-y-4">
+                        <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
                             <h4 className="text-xs font-bold text-txt-secondary uppercase tracking-wider">Ítems Cotizados</h4>
                             <div className="bg-dark-bg rounded-lg border border-dark-border overflow-hidden">
                                 <table className="w-full text-left text-sm">

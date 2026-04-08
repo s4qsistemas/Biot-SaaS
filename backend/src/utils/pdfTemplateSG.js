@@ -195,7 +195,7 @@ const generarTemplateCotizacionSG = (cotizacion) => {
                 border-bottom: 1.5px solid #000;
                 padding: 2px 10px;
                 font-weight: bold;
-                text-align: right;
+                text-align: center;
                 font-size: 10px;
             }
 
@@ -319,7 +319,7 @@ const generarTemplateCotizacionSG = (cotizacion) => {
         <!-- NAVIGATION INFO -->
         <div class="nav-info">
             <div class="info-row">
-                <div class="info-label">${cotizacion.empresa?.modulo_naves_activo ? 'NAVE' : 'NAVE / EQUIPO'}</div>
+                <div class="info-label">NAVE / EQUIPO</div>
                 <div class="info-dots">:</div>
                 <div class="info-val">${cotizacion.nave?.nombre || cotizacion.nave_equipo || '---'}</div>
             </div>
