@@ -733,8 +733,8 @@ const Cotizaciones = () => {
 
             {isRejectModalOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fadeIn">
-                    <div className="bg-dark-surface border border-red-500/50 w-full max-w-md rounded-xl shadow-2xl p-6">
-                        <div className="flex justify-between items-center mb-6">
+                    <div className="bg-dark-surface border border-red-500/50 w-full max-w-md max-h-[90vh] overflow-y-auto custom-scrollbar rounded-xl shadow-2xl p-6">
+                        <div className="flex justify-between items-center mb-6 sticky top-0 bg-dark-surface z-10 pb-2">
                             <h3 className="text-lg font-bold text-white flex items-center gap-2">❌ Rechazar Cotización</h3>
                             <button onClick={() => { setIsRejectModalOpen(false); setMotivoRechazo(''); }} className="text-txt-secondary hover:text-white transition-colors">✕</button>
                         </div>
@@ -760,8 +760,8 @@ const Cotizaciones = () => {
 
             {isEmailModalOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fadeIn">
-                    <div className="bg-dark-surface border border-blue-500/50 w-full max-w-md rounded-xl shadow-2xl p-6">
-                        <div className="flex justify-between items-center mb-6">
+                    <div className="bg-dark-surface border border-blue-500/50 w-full max-w-md max-h-[90vh] overflow-y-auto custom-scrollbar rounded-xl shadow-2xl p-6">
+                        <div className="flex justify-between items-center mb-6 sticky top-0 bg-dark-surface z-10 pb-2">
                             <h3 className="text-lg font-bold text-white flex items-center gap-2">
                                 📧 {selectedCotizacion?.estado === 'borrador' ? 'Enviar Cotización' : 'Reenviar Cotización'}
                             </h3>
