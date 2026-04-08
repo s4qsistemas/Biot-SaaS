@@ -114,6 +114,7 @@ const Entidades = () => {
                                 <th className="p-4 font-medium">RUT</th>
                                 <th className="p-4 font-medium">Giro</th>
                                 <th className="p-4 font-medium">Tipo</th>
+                                <th className="p-4 font-medium">Ciudad</th>
                                 <th className="p-4 font-medium">Contacto</th>
                                 {tienePermisosCompletos && (
                                     <th className="p-4 font-medium text-right">Acciones</th>
@@ -150,6 +151,9 @@ const Entidades = () => {
                                         `}>
                                             {entidad.tipo}
                                         </span>
+                                    </td>
+                                    <td className="p-4 text-txt-secondary text-sm">
+                                        {entidad.ciudad || '-'}
                                     </td>
                                     <td className="p-4 text-txt-secondary text-sm">
                                         {entidad.contacto_nombre || '-'}

@@ -11,11 +11,11 @@ async function main() {
     // 1. CATÁLOGO DE MATERIALES (MAT)
     // ==========================================
     const materiales = [
-        { tenant_id: TENANT_ID, codigo: 'MAT.CON.001', nombre: 'Electrodo Celulósico 6011 3/32" INDURA', tipo_medicion: 'PESO', unidad_base: 'KG', precio_compra: 4500, precio_venta: 8500, stock_minimo: 15, activo: true },
-        { tenant_id: TENANT_ID, codigo: 'MAT.ACE.001', nombre: 'Plancha Acero Carbono ASTM A36 5mm', tipo_medicion: 'UNIDAD', unidad_base: 'UN', precio_compra: 45000, precio_venta: 75000, stock_minimo: 5, activo: true },
-        { tenant_id: TENANT_ID, codigo: 'MAT.PER.001', nombre: 'Perfil Cuadrado Acero 100x100x3mm', tipo_medicion: 'LONGITUD', unidad_base: 'TIRA', precio_compra: 22000, precio_venta: 38000, stock_minimo: 10, activo: true },
-        { tenant_id: TENANT_ID, codigo: 'MAT.CON.002', nombre: 'Disco de Corte Inox 4.5" Makita', tipo_medicion: 'UNIDAD', unidad_base: 'UN', precio_compra: 1200, precio_venta: 2500, stock_minimo: 50, activo: true },
-        { tenant_id: TENANT_ID, codigo: 'MAT.GAS.001', nombre: 'Cilindro Gas Argón Indura (Recarga)', tipo_medicion: 'UNIDAD', unidad_base: 'CIL', precio_compra: 35000, precio_venta: 55000, stock_minimo: 2, activo: true }
+        { tenant_id: TENANT_ID, codigo: 'MAT.CON.001', nombre: 'Electrodo Celulósico 6011 3/32" INDURA', tipo_medicion: 'PESO', unidad_base: 'KG', precio_compra: 4500, precio_venta: 8500, stock_minimo: 15, permite_retazo: false, activo: true },
+        { tenant_id: TENANT_ID, codigo: 'MAT.ACE.001', nombre: 'Plancha Acero Carbono ASTM A36 5mm', tipo_medicion: 'UNIDAD', unidad_base: 'UN', precio_compra: 45000, precio_venta: 75000, stock_minimo: 5, permite_retazo: true, activo: true },
+        { tenant_id: TENANT_ID, codigo: 'MAT.PER.001', nombre: 'Perfil Cuadrado Acero 100x100x3mm', tipo_medicion: 'LONGITUD', unidad_base: 'TIRA', precio_compra: 22000, precio_venta: 38000, stock_minimo: 10, permite_retazo: true, activo: true },
+        { tenant_id: TENANT_ID, codigo: 'MAT.CON.002', nombre: 'Disco de Corte Inox 4.5" Makita', tipo_medicion: 'UNIDAD', unidad_base: 'UN', precio_compra: 1200, precio_venta: 2500, stock_minimo: 50, permite_retazo: false, activo: true },
+        { tenant_id: TENANT_ID, codigo: 'MAT.GAS.001', nombre: 'Cilindro Gas Argón Indura (Recarga)', tipo_medicion: 'UNIDAD', unidad_base: 'CIL', precio_compra: 35000, precio_venta: 55000, stock_minimo: 2, permite_retazo: false, activo: true }
     ];
 
     await prisma.producto.createMany({ data: materiales, skipDuplicates: true });
@@ -25,9 +25,9 @@ async function main() {
     // 2. CATÁLOGO DE MANO DE OBRA (HH)
     // ==========================================
     const operarios = [
-        { tenant_id: TENANT_ID, codigo: 'OPE.SOL.001', nombre: 'Juan Pérez', especialidad: 'Soldador Calificado 6G', valor_hora: 8500, celular: '+56911111111', activo: true },
-        { tenant_id: TENANT_ID, codigo: 'OPE.MEC.001', nombre: 'Carlos Soto', especialidad: 'Tornero CNC', valor_hora: 9500, celular: '+56922222222', activo: true },
-        { tenant_id: TENANT_ID, codigo: 'OPE.AYU.001', nombre: 'Luis Tapia', especialidad: 'Ayudante Estructural', valor_hora: 5000, celular: '+56933333333', activo: true }
+        { tenant_id: TENANT_ID, codigo: 'OPE.SOL.001', nombre: 'Juan Pérez', especialidad: 'Soldador Calificado 6G', email: 'sigm4q@gmail.com', valor_hora: 8500, celular: '+56911111111', activo: true },
+        { tenant_id: TENANT_ID, codigo: 'OPE.MEC.001', nombre: 'Carlos Soto', especialidad: 'Tornero CNC', email: 'sigm4q@gmail.com', valor_hora: 9500, celular: '+56922222222', activo: true },
+        { tenant_id: TENANT_ID, codigo: 'OPE.AYU.001', nombre: 'Luis Tapia', especialidad: 'Ayudante Estructural', email: 'sigm4q@gmail.com', valor_hora: 5000, celular: '+56933333333', activo: true }
     ];
 
     await prisma.operario.createMany({ data: operarios, skipDuplicates: true });

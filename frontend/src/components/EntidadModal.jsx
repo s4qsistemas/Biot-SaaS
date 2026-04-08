@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { X, Save, Building2, Hash, Phone, MapPin, Mail, AlertCircle } from 'lucide-react';
+import { X, Save, Building2, Hash, Phone, MapPin, Mail, AlertCircle, User } from 'lucide-react';
 // Importamos la utilidad que acabamos de crear
 import { cleanRut, formatRut, validateRut } from '../utils/rut';
 
@@ -11,6 +11,7 @@ const EntidadModal = ({ isOpen, onClose, onSave, entidadToEdit }) => {
         giro: '',
         email: '',
         telefono: '',
+        ciudad: '',
         direccion: '',
         contacto_nombre: '',
         activo: true
@@ -33,6 +34,7 @@ const EntidadModal = ({ isOpen, onClose, onSave, entidadToEdit }) => {
                     giro: entidadToEdit.giro || '',
                     email: entidadToEdit.email || '',
                     telefono: entidadToEdit.telefono || '',
+                    ciudad: entidadToEdit.ciudad || '',
                     direccion: entidadToEdit.direccion || '',
                     contacto_nombre: entidadToEdit.contacto_nombre || '',
                     activo: entidadToEdit.activo ?? true
@@ -213,7 +215,9 @@ const EntidadModal = ({ isOpen, onClose, onSave, entidadToEdit }) => {
 
                         {/* Nombre de Contacto */}
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-txt-secondary uppercase">Contacto</label>
+                            <label className="text-xs font-bold text-txt-secondary uppercase flex items-center gap-2">
+                                <User size={14} /> Contacto
+                            </label>
                             <input
                                 type="text"
                                 name="contacto_nombre"
@@ -221,6 +225,21 @@ const EntidadModal = ({ isOpen, onClose, onSave, entidadToEdit }) => {
                                 onChange={handleChange}
                                 placeholder="Persona de contacto"
                                 className="w-full bg-dark-bg border border-dark-border rounded-lg px-4 py-2 text-txt-primary focus:border-brand outline-none"
+                            />
+                        </div>
+
+                        {/* Ciudad */}
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-txt-secondary uppercase flex items-center gap-2">
+                                <MapPin size={14} /> Ciudad
+                            </label>
+                            <input
+                                type="text"
+                                name="ciudad"
+                                value={formData.ciudad}
+                                onChange={handleChange}
+                                placeholder="Ej: Puerto Montt"
+                                className="w-full bg-dark-bg border border-dark-border rounded-lg px-4 py-2 text-txt-primary focus:border-brand outline-none transition-colors"
                             />
                         </div>
                     </div>
