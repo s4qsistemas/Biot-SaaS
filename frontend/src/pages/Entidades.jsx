@@ -148,6 +148,7 @@ const Entidades = () => {
                                             ${entidad.tipo === 'cliente' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : ''}
                                             ${entidad.tipo === 'proveedor' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : ''}
                                             ${entidad.tipo === 'mixto' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : ''}
+                                            ${entidad.tipo === 'prospecto' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' : ''}
                                         `}>
                                             {entidad.tipo}
                                         </span>

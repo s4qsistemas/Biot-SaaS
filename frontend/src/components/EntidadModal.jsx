@@ -182,6 +182,7 @@ const EntidadModal = ({ isOpen, onClose, onSave, entidadToEdit }) => {
                                 className="w-full bg-dark-bg border border-dark-border rounded-lg px-4 py-2 text-txt-primary focus:border-brand outline-none"
                             >
                                 <option value="cliente">Cliente</option>
+                                <option value="prospecto">Prospecto</option>
                                 <option value="proveedor">Proveedor</option>
                                 <option value="mixto">Ambos (Mixto)</option>
                             </select>

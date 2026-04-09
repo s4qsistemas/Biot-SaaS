@@ -116,8 +116,17 @@ const updateEstado = async (req, res) => {
         const tenant_id = req.user.tenant_id;
         const { estado, motivo_rechazo } = req.body;
 
-        const existe = await prisma.cotizacion.findFirst({ where: { id: parseInt(id), tenant_id } });
+        const existe = await prisma.cotizacion.findFirst({ 
+            where: { id: parseInt(id), tenant_id },
+            include: { entidad: true }
+        });
         if (!existe) return res.status(404).json({ message: 'Cotización no encontrada' });
+
+        if (estado.toLowerCase() === 'aceptada' && existe.entidad?.tipo === 'prospecto') {
+            return res.status(400).json({ 
+                message: 'No se puede aceptar la cotización: El Prospecto debe convertirse en Cliente para generar una Orden de Trabajo.' 
+            });
+        }
 
         const resultado = await prisma.$transaction(async (tx) => {
             const cotizacionActualizada = await tx.cotizacion.update({

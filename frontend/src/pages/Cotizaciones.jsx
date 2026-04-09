@@ -315,7 +315,7 @@ const Cotizaciones = () => {
     const totales = calcularTotales();
 
     const clientesFiltrados = clientes
-        .filter(c => c.activo && ['cliente', 'mixto'].includes(c.tipo))
+        .filter(c => c.activo && ['cliente', 'mixto', 'prospecto'].includes(c.tipo))
         .filter(c => {
             if (!busquedaCliente || busquedaCliente.length < 2) return true;
             const term = busquedaCliente.toLowerCase();
