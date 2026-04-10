@@ -23,8 +23,19 @@ const Sidebar = ({ collapsed, setCollapsed }) => {
         { name: 'Órdenes Trabajo', path: '/dashboard/ordenes-trabajo', icon: Wrench, roles: PERMISOS_FRONT.OT_LEER },
         { name: 'Entidades', path: '/dashboard/entidades', icon: Users, roles: PERMISOS_FRONT.ENTIDADES_LEER },
         { name: 'Catálogos', path: '/dashboard/catalogos', icon: BookOpen, roles: PERMISOS_FRONT.CATALOGOS_LEER },
-        { name: 'Configuración', path: '/dashboard/configuracion', icon: Settings, roles: PERMISOS_FRONT.CATALOGOS_LEER },
     ];
+
+    // Solo Maestranza SG (tenant 2) tiene acceso a Configuración (cotizaciones personalizadas)
+    // Se usa opcionalmente import.meta.env.VITE_TENANT_ID_MAESTRANZA_SG o se asume el 2
+    const tenantMaestranzaId = parseInt(import.meta.env.VITE_TENANT_ID_MAESTRANZA_SG || '2');
+    if (user?.empresa?.id === tenantMaestranzaId || user?.tenant_id === tenantMaestranzaId) {
+        menuItems.push({
+            name: 'Configuración',
+            path: '/dashboard/configuracion',
+            icon: Settings,
+            roles: PERMISOS_FRONT.CATALOGOS_LEER
+        });
+    }
 
     if (user?.empresa?.modulo_naves_activo) {
         menuItems.splice(5, 0, {
