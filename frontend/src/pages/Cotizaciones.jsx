@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { PlusCircle, FileText, Trash2, Plus, Eye, Send, CheckCircle, XCircle, Pencil, Search } from 'lucide-react';
 import { getCotizaciones, createCotizacion, getCotizacionById, updateEstadoCotizacion, updateCotizacionCompleta, deleteCotizacion } from '../services/cotizaciones.service';
 import { getMateriales, getOperarios, getEquipos } from '../services/catalogos.service';
+import { updateEntidad } from '../services/entidades.service';
 import api from '../utils/api';
 
 // 🛡️ IMPORTACIONES DE SEGURIDAD FRONTEND
@@ -212,7 +213,7 @@ const Cotizaciones = () => {
             cargarCotizaciones();
         } catch (error) {
             console.error("Error cambiando estado:", error);
-            alert("Error al actualizar el estado.");
+            alert(error.response?.data?.message || "Error al actualizar el estado.");
         }
     };
 
@@ -226,7 +227,7 @@ const Cotizaciones = () => {
             cargarCotizaciones();
         } catch (error) {
             console.error("Error al rechazar:", error);
-            alert("Error al rechazar la cotización.");
+            alert(error.response?.data?.message || "Error al rechazar la cotización.");
         }
     };
 
@@ -701,7 +702,23 @@ const Cotizaciones = () => {
                                         <button onClick={() => setIsRejectModalOpen(true)} className="bg-dark-surface border border-red-500/30 text-red-400 hover:bg-red-500/10 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm font-medium">
                                             <XCircle size={16} /> Rechazar
                                         </button>
-                                        <button onClick={() => {
+                                        <button onClick={async () => {
+                                            if (selectedCotizacion.entidad?.tipo === 'prospecto') {
+                                                const confirmarConversion = window.confirm("⚠️ El cliente es un 'Prospecto'. Para generar la Orden de Trabajo, debe convertirse en 'Cliente'.\n\n¿Deseas convertirlo a 'Cliente' automáticamente y continuar con la aprobación?");
+                                                
+                                                if (confirmarConversion) {
+                                                    try {
+                                                        await updateEntidad(selectedCotizacion.entidad_id, { tipo: 'cliente' });
+                                                        // Actualizamos localmente para evitar problemas en el re-render inmediato
+                                                        selectedCotizacion.entidad.tipo = 'cliente';
+                                                    } catch (error) {
+                                                        console.error("Error al convertir prospecto:", error);
+                                                        return alert("No se pudo convertir el prospecto a cliente automáticamente.");
+                                                    }
+                                                } else {
+                                                    return;
+                                                }
+                                            }
                                             if (esCotizacionVencida(selectedCotizacion)) {
                                                 if (!window.confirm("⚠️ Cotización VENCIDA. ¿Aprobar manteniendo precios?")) return;
                                             }

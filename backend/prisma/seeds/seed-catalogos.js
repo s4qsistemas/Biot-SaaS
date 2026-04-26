@@ -2,10 +2,27 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function main() {
-    console.log('🌱 Sembrando Catálogos Maestros (Nomenclatura 3x3) para Empresa 1...');
+    console.log('🌱 Sembrando Catálogos Maestros para Empresa 1...');
 
-    // 🛡️ INYECCIÓN SAAS: Todo debe pertenecer a un inquilino
-    const TENANT_ID = 2;
+    // 🛡️ INYECCIÓN SAAS: Buscar empresa por alias para obtener el ID dinámicamente
+    const empresa = await prisma.empresa.findUnique({
+        where: { alias: 'empresa1' }
+    });
+
+    if (!empresa) {
+        console.error('❌ ERROR: No se encontró la empresa con alias "empresa1". Ejecuta primero seed-paywall.js o seed-superadmin.js');
+        return;
+    }
+
+    const TENANT_ID = empresa.id;
+    console.log(`🏢 Empresa detectada: ${empresa.nombre} (ID: ${TENANT_ID})`);
+
+    // Habilitar módulo de naves para esta empresa
+    await prisma.empresa.update({
+        where: { id: TENANT_ID },
+        data: { modulo_naves_activo: true }
+    });
+    console.log(`⚙️ Módulo de Naves activado para ${empresa.alias}.`);
 
     // ==========================================
     // 1. CATÁLOGO DE MATERIALES (MAT)
@@ -59,7 +76,31 @@ async function main() {
     await prisma.catalogoTarea.createMany({ data: tareas, skipDuplicates: true });
     console.log(`✅ Registrados Tipos de Tareas (TAR).`);
 
-    console.log('🏆 ¡Catálogos inyectados con éxito en Empresa 1!');
+    // ==========================================
+    // 5. CATÁLOGO DE UBICACIONES (UBI)
+    // ==========================================
+    const ubicaciones = [
+        { tenant_id: TENANT_ID, centro: 'Planta Principal', bodega: 'Bodega de Materiales', ubicacion: 'Estante A1', nivel: 'Nivel 1' },
+        { tenant_id: TENANT_ID, centro: 'Planta Principal', bodega: 'Pañol de Herramientas', ubicacion: 'Armario B2', nivel: 'Nivel 2' },
+        { tenant_id: TENANT_ID, centro: 'Planta Principal', bodega: 'Bodega de Pintura', ubicacion: 'Zona de Químicos', nivel: 'Nivel 1' }
+    ];
+
+    await prisma.ubicacion.createMany({ data: ubicaciones, skipDuplicates: true });
+    console.log(`✅ Registradas Ubicaciones (UBI).`);
+
+    // ==========================================
+    // 6. CATÁLOGO DE NAVES (NAV)
+    // ==========================================
+    const naves = [
+        { tenant_id: TENANT_ID, nombre: 'Buque Factoría Cabo de Hornos', descripcion: 'Buque de investigación científica y pesca.', activo: true },
+        { tenant_id: TENANT_ID, nombre: 'Remolcador RAM Galvarino', descripcion: 'Remolcador de alta mar y asistencia.', activo: true },
+        { tenant_id: TENANT_ID, nombre: 'Fragata Almirante Condell', descripcion: 'Fragata de defensa costera.', activo: true }
+    ];
+
+    await prisma.nave.createMany({ data: naves, skipDuplicates: true });
+    console.log(`✅ Registradas Naves (NAV).`);
+
+    console.log(`🏆 ¡Catálogos inyectados con éxito en ${empresa.nombre}!`);
 }
 
 main()
