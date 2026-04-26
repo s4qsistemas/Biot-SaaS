@@ -37,7 +37,7 @@ const enviarWebhookN8n = async (payload) => {
             console.error("Mensaje de Error:", error.message);
         }
         console.log("==========================================\n");
-        throw new Error('Fallo la conexión con el servidor de automatización (n8n).');
+        throw new Error('Fallo la conexión con el servidor de automatización (n8n). Por favor, contacte al administrador.');
     }
 };
 
@@ -55,7 +55,7 @@ const enviarContactoN8n = async (payload) => {
         return response.data;
     } catch (error) {
         console.error("❌ Error enviando contacto a N8N:", error.message);
-        throw new Error('No se pudo enviar el mensaje. Intente más tarde.');
+        throw new Error('No se pudo enviar el mensaje. Por favor, contacte al administrador.');
     }
 };
 

@@ -366,7 +366,8 @@ const enviarOT = async (req, res) => {
         const otActualizada = await prisma.ordenTrabajo.update({ where: { id: parseInt(id) }, data: { pdf_base64 } });
         res.status(200).json({ message: "OT enviada", ot: otActualizada });
     } catch (error) {
-        res.status(500).json({ message: "Error al enviar PDF" });
+        console.error("Error en enviarOT:", error);
+        res.status(500).json({ message: error.message || "Error al enviar el PDF. Por favor, contacte al administrador." });
     }
 };
 

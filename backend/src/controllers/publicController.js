@@ -101,7 +101,7 @@ const procesarContacto = async (req, res) => {
 
     } catch (error) {
         console.error('Error en procesarContacto:', error);
-        res.status(500).json({ message: 'Hubo un error al enviar el mensaje.' });
+        res.status(500).json({ message: error.message || 'Hubo un error al enviar el mensaje. Por favor, contacte al administrador.' });
     }
 };
 

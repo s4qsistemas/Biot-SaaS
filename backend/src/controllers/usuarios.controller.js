@@ -43,7 +43,7 @@ const registrarEmpleado = async (req, res) => {
         if (error.code === 'P2002') {
             return res.status(400).json({ message: "Este correo electrónico ya está registrado en el sistema." });
         }
-        res.status(500).json({ message: "Error interno al registrar el empleado." });
+        res.status(500).json({ message: "Error interno al registrar el empleado. Por favor, contacte al administrador." });
     }
 };
 
@@ -74,7 +74,7 @@ const obtenerEquipo = async (req, res) => {
         res.json(equipo);
     } catch (error) {
         console.error("Error al obtener equipo:", error);
-        res.status(500).json({ message: "Error interno al obtener el equipo." });
+        res.status(500).json({ message: "Error interno al obtener el equipo. Por favor, contacte al administrador." });
     }
 };
 
@@ -128,7 +128,7 @@ const editarEmpleado = async (req, res) => {
 
     } catch (error) {
         console.error("Error al editar empleado:", error);
-        res.status(500).json({ message: "Error interno al actualizar el empleado." });
+        res.status(500).json({ message: "Error interno al actualizar el empleado. Por favor, contacte al administrador." });
     }
 };
 

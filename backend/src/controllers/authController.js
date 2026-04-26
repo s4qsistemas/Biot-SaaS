@@ -41,7 +41,7 @@ const login = async (req, res) => {
             }
         });
     } catch (error) {
-        res.status(500).json({ message: 'Error interno en el servidor.' });
+        res.status(500).json({ message: 'Error interno en el servidor. Por favor, contacte al administrador.' });
     }
 };
 
@@ -62,7 +62,7 @@ const getMe = async (req, res) => {
             }
         });
     } catch (error) {
-        res.status(500).json({ message: 'Error al obtener perfil' });
+        res.status(500).json({ message: 'Error al obtener perfil. Por favor, contacte al administrador.' });
     }
 };
 
@@ -83,7 +83,7 @@ const cambiarClaveObligatoria = async (req, res) => {
 
         res.json({ ok: true, message: 'Contraseña actualizada correctamente.' });
     } catch (error) {
-        res.status(500).json({ message: 'Error interno del servidor.' });
+        res.status(500).json({ message: 'Error interno del servidor. Por favor, contacte al administrador.' });
     }
 };
 

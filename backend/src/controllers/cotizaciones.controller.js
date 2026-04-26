@@ -15,7 +15,7 @@ const getCotizaciones = async (req, res) => {
         });
         res.json(cotizaciones);
     } catch (error) {
-        res.status(500).json({ message: 'Error interno del servidor' });
+        res.status(500).json({ message: 'Error interno del servidor. Por favor, contacte al administrador.' });
     }
 };
 
@@ -29,7 +29,7 @@ const getCotizacionById = async (req, res) => {
         if (!cotizacion) return res.status(404).json({ message: 'Cotización no encontrada' });
         res.json(cotizacion);
     } catch (error) {
-        res.status(500).json({ message: 'Error interno' });
+        res.status(500).json({ message: 'Error interno. Por favor, contacte al administrador.' });
     }
 };
 
@@ -106,7 +106,7 @@ const createCotizacion = async (req, res) => {
 
         res.status(201).json({ message: 'Cotización creada', data: cotizacionFinal });
     } catch (error) {
-        res.status(500).json({ message: 'Error al procesar la cotización' });
+        res.status(500).json({ message: 'Error al procesar la cotización. Por favor, contacte al administrador.' });
     }
 };
 
@@ -159,7 +159,7 @@ const updateEstado = async (req, res) => {
 
         res.json({ message: 'Estado actualizado', data: resultado });
     } catch (error) {
-        res.status(500).json({ message: 'Error al cambiar el estado' });
+        res.status(500).json({ message: 'Error al cambiar el estado. Por favor, contacte al administrador.' });
     }
 };
 
@@ -222,7 +222,7 @@ const updateCotizacion = async (req, res) => {
 
         res.json({ message: 'Cotización actualizada', data: transaccion[1] });
     } catch (error) {
-        res.status(500).json({ message: 'Error al actualizar' });
+        res.status(500).json({ message: 'Error al actualizar. Por favor, contacte al administrador.' });
     }
 };
 
@@ -270,7 +270,7 @@ const enviarCotizacion = async (req, res) => {
         res.status(200).json({ message: "Enviada exitosamente", cotizacion: cotizacionActualizada });
     } catch (error) {
         console.error("Error en enviarCotizacion:", error);
-        res.status(500).json({ message: "Error al enviar PDF" });
+        res.status(500).json({ message: error.message || "Error al enviar la cotización. Por favor, contacte al administrador." });
     }
 };
 
@@ -307,7 +307,7 @@ const previewCotizacion = async (req, res) => {
         res.setHeader('Content-Disposition', `inline; filename="Cotizacion_${cotizacion.folio}.pdf"`);
         res.send(pdfBuffer);
     } catch (error) {
-        res.status(500).json({ message: "Error al generar vista previa" });
+        res.status(500).json({ message: "Error al generar vista previa. Por favor, contacte al administrador." });
     }
 };
 
@@ -332,7 +332,7 @@ const deleteCotizacion = async (req, res) => {
         res.json({ message: 'Cotización eliminada correctamente' });
     } catch (error) {
         console.error("Error al eliminar cotización:", error);
-        res.status(500).json({ message: 'Error al eliminar la cotización' });
+        res.status(500).json({ message: 'Error al eliminar la cotización. Por favor, contacte al administrador.' });
     }
 };
 
